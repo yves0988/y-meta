@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#102b55">
+  <meta name="description" content="Y-META connects people through video calls, voice calls, messaging and social sharing.">
+  <title>Y-META | Connect Face to Face</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Y-META</h1>
+  <input id="search" placeholder="Search people, videos and friends">
+  <div class="top-actions">
+    <button onclick="showPage('notifications')">🔔</button>
+    <button onclick="showPage('profile')">👤</button>
+  </div>
+</header>
+
+<nav class="navigation">
+  <button onclick="showPage('home')">🏠 Home</button>
+  <button onclick="showPage('calls')">📹 Calls</button>
+  <button onclick="showPage('contacts')">👥 Contacts</button>
+  <button onclick="showPage('messages')">💬 Messages</button>
+  <button onclick="showPage('discover')">▶ Discover</button>
+  <button onclick="showPage('profile')">👤 Profile</button>
+</nav>
+
+<main class="layout">
+
+  <aside class="sidebar">
+    <h3>My Y-META</h3>
+    <button onclick="showPage('home')">🏠 Home</button>
+    <button onclick="showPage('contacts')">📱 Phone contacts</button>
+    <button onclick="showPage('calls')">📞 Call history</button>
+    <button onclick="showPage('messages')">💬 My messages</button>
+    <button onclick="showPage('discover')">🎬 Videos</button>
+    <button onclick="showPage('profile')">⚙ Settings</button>
+  </aside>
+
+  <section class="content">
+
+    <section id="home" class="page">
+      <h2>Welcome to Y-META 👋</h2>
+      <p>Connect with your people, anywhere in the world.</p>
+
+      <div class="quick-actions">
+        <button onclick="showPage('calls')">📹 Video Call</button>
+        <button onclick="showPage('calls')">📞 Voice Call</button>
+        <button onclick="showPage('contacts')">👥 Find Friends</button>
+        <button onclick="showPage('messages')">💬 Messages</button>
+      </div>
+
+      <h3>Stories</h3>
+      <div class="stories">
+        <div class="story">➕<br>Your story</div>
+        <div class="story">👩<br>Friend 1</div>
+        <div class="story">👨<br>Friend 2</div>
+        <div class="story">🌍<br>Explore</div>
+      </div>
+
+      <h3>What's happening?</h3>
+      <div class="post-box">
+        <textarea id="postText" placeholder="Share something with your friends..."></textarea>
+        <button onclick="publishPost()">Publish Post</button>
+      </div>
+
+      <div id="feed"></div>
+
+      <div class="ad-space">
+        <small>Sponsored advertisement</small>
+        <p>Your business advertisement can appear here.</p>
+      </div>
+    </section>
+
+    <section id="calls" class="page hidden">
+      <h2>📞 Calls</h2>
+      <p>Connect face to face with your friends.</p>
+      <input id="callRoom" placeholder="Enter your call room">
+      <input id="callName" placeholder="Your name">
+      <button onclick="startCall()">Start Video Call</button>
+      <div id="callArea" class="hidden">
+        <video id="myVideo" autoplay muted playsinline></video>
+        <button onclick="endCall()">End Call</button>
+      </div>
+      <h3>Recent calls</h3>
+      <div id="callHistory">No calls yet.</div>
+    </section>
+
+    <section id="contacts" class="page hidden">
+      <h2>👥 My Contacts</h2>
+      <p>Find your friends using phone contacts or email.</p>
+      <button onclick="importContacts()">Import Phone Contacts</button>
+      <input id="friendSearch" placeholder="Search by name, email or phone">
+      <button onclick="searchFriend()">Search</button>
+      <div id="contactResults"></div>
+    </section>
+
+    <section id="messages" class="page hidden">
+      <h2>💬 Messages</h2>
+      <p>Chat with your Y-META friends.</p>
+      <input id="messageName" placeholder="Friend's username">
+      <textarea id="messageText" placeholder="Write your message"></textarea>
+      <button onclick="sendMessage()">Send Message</button>
+      <div id="messageResults"></div>
+    </section>
+
+    <section id="discover" class="page hidden">
+      <h2>🎬 Discover</h2>
+      <p>Discover videos, creators and new people.</p>
+      <input placeholder="Search videos and creators">
+      <div class="video-card">
+        <h3>Y-META Video Community</h3>
+        <p>Short videos and content from your community will appear here.</p>
+      </div>
+    </section>
+
+    <section id="notifications" class="page hidden">
+      <h2>🔔 Notifications</h2>
+      <p id="notificationList">You have no new notifications.</p>
+    </section>
+
+    <section id="profile" class="page hidden">
+      <h2>👤 My Profile</h2>
+      <input id="profileName" placeholder="Your name">
+      <input id="profileEmail" placeholder="Your email">
+      <button onclick="saveProfile()">Save Profile</button>
+      <p id="profileStatus"></p>
+    </section>
+
+  </section>
+
+</main>
+
+<footer>
+  <p>Y-META © 2026 | Connect People, Face to Face.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
