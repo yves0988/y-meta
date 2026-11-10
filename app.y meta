@@ -1,0 +1,104 @@
+
+function showPage(pageId) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.add("hidden");
+  });
+
+  const selected = document.getElementById(pageId);
+
+  if (selected) selected.classList.remove("hidden");
+}
+
+function publishPost() {
+  const input = document.getElementById("postText");
+  const text = input.value.trim();
+
+  if (!text) {
+    alert("Write something first!");
+    return;
+  }
+
+  const post = document.createElement("div");
+  post.className = "post-box";
+
+  const content = document.createElement("p");
+  content.textContent = text;
+
+  post.appendChild(content);
+  document.getElementById("feed").prepend(post);
+
+  input.value = "";
+}
+
+async function importContacts() {
+  if (!("contacts" in navigator) ||
+      !navigator.contacts.select) {
+    alert("Contact import is not supported in this browser. You can search for friends by email or phone instead.");
+    return;
+  }
+
+  try {
+    const contacts = await navigator.contacts.select(
+      ["name", "tel", "email"],
+      { multiple: true }
+    );
+
+    document.getElementById("contactResults").textContent =
+      contacts.length + " contacts selected. Connect to your Y-META account service to find registered friends.";
+
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function searchFriend() {
+  const search =
+    document.getElementById("friendSearch").value.trim();
+
+  if (!search) {
+    alert("Enter a name, phone number or email.");
+    return;
+  }
+
+  document.getElementById("contactResults").textContent =
+    "Friend search needs the Y-META user database to be connected.";
+}
+
+function sendMessage() {
+  const name =
+    document.getElementById("messageName").value.trim();
+
+  const message =
+    document.getElementById("messageText").value.trim();
+
+  if (!name || !message) {
+    alert("Enter a friend and message.");
+    return;
+  }
+
+  document.getElementById("messageResults").textContent =
+    "Messaging service must be connected before messages can be delivered.";
+
+  document.getElementById("messageText").value = "";
+}
+
+function saveProfile() {
+  const name = document.getElementById("profileName").value.trim();
+  const email = document.getElementById("profileEmail").value.trim();
+
+  if (!name || !email) {
+    alert("Complete your profile.");
+    return;
+  }
+
+  document.getElementById("profileStatus").textContent =
+    "Profile information entered. Connect Firebase to save it securely.";
+}
+
+function startCall() {
+  alert("Connect the secure LiveKit video-call service to start a real call.");
+}
+
+function endCall() {
+  document.getElementById("callArea").classList.add("hidden");
+}
