@@ -1,0 +1,132 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #10172a;
+  color: white;
+  text-align: center;
+}
+
+.header {
+  background: #182b50;
+  padding: 22px;
+}
+
+.header h1 {
+  color: #36b7ff;
+  margin: 0;
+  font-size: 34px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.panel {
+  background: #1d2942;
+  padding: 25px;
+  border-radius: 15px;
+  max-width: 450px;
+  margin: auto;
+}
+
+input {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0 18px;
+  border: none;
+  border-radius: 8px;
+}
+
+label {
+  display: block;
+  text-align: left;
+}
+
+button {
+  padding: 13px 18px;
+  margin: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #087df0;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #005bbb;
+}
+
+.hidden {
+  display: none;
+}
+
+#videoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.videoBox {
+  position: relative;
+  background: #26344d;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.videoBox video,
+#remoteVideos video {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  object-fit: cover;
+}
+
+.videoBox span {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #0009;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+
+#remoteVideos {
+  min-width: 0;
+}
+
+#remoteVideos video {
+  border-radius: 12px;
+  background: #26344d;
+}
+
+.controls {
+  margin-top: 20px;
+}
+
+.endCall {
+  background: #e32636;
+}
+
+footer {
+  padding: 20px;
+  color: #aab7ca;
+}
+
+@media (max-width: 600px) {
+  #videoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .controls button {
+    width: 90%;
+  }
+}
