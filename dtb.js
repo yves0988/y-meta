@@ -1,2 +1,2 @@
 Database connected!
-Server running at http://ymeta:3000
+const API_URL = "https://YOUR-BACKEND-YMETA.onrender.com";
