@@ -1,18 +1,18 @@
 
 // Track active connections for each user
-const onlineUsers = new Map();
+ onlineUsers =  Map();
 
 // Send current online users to everyone
-function broadcastOnlineUsers() {
+ broadcastOnlineUsers() {
   io.emit("online_users", Array.from(onlineUsers.keys()));
 }
 
 // SOCKET.IO AUTHENTICATION
 io.use((socket, next) => {
-  const userId = socket.request.session?.userId;
+   userId = socket.request.session?.userId;
 
-  if (!userId) {
-    return next(new Error("Not authenticated"));
+   (!userId) {
+     next( Error("Not authenticated"));
   }
 
   socket.userId = userId;
@@ -22,10 +22,10 @@ io.use((socket, next) => {
 // CONNECT USERS
 io.on("connection", (socket) => {
 
-  const userId = socket.userId;
+   userId = socket.userId;
 
   // Add this user's connection
-  const connections = onlineUsers.get(userId) || new Set();
+   connections = onlineUsers.get(userId) || new Set();
 
   connections.add(socket.id);
   onlineUsers.set(userId, connections);
@@ -40,35 +40,35 @@ io.on("connection", (socket) => {
 
   // SEND MESSAGE
   socket.on("send_message", (data, callback) => {
-    try {
-      const receiverId = Number(data?.receiverId);
-      const message = data?.message;
+     {
+       receiverId = Number(data?.receiverId);
+       message = data?.message;
 
-      if (
+       (
         !Number.isSafeInteger(receiverId) ||
         receiverId < 1 ||
-        typeof message !== "string" ||
+         message !== "string" ||
         !message.trim() ||
         message.length > 2000
       ) {
-        return callback?.({ error: "Invalid message" });
+         callback?.({ error: "Invalid message" });
       }
 
-      const receiver = db.prepare(
+       receiver = db.prepare(
         "SELECT id FROM users WHERE id = ?"
       ).get(receiverId);
 
-      if (!receiver || receiverId === userId) {
-        return callback?.({ error: "Invalid recipient" });
+       (!receiver || receiverId === userId) {
+         callback?.({ error: "Invalid recipient" });
       }
 
-      const result = db.prepare(`
+       result = db.prepare(`
         INSERT INTO messages
         (sender_id, receiver_id, message)
         VALUES (?, ?, ?)
       `).run(userId, receiverId, message.trim());
 
-      const savedMessage = db.prepare(`
+       savedMessage = db.prepare(`
         SELECT id, sender_id, receiver_id, message, created_at
         FROM messages WHERE id = ?
       `).get(Number(result.lastInsertRowid));
@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
 
       callback?.({ success: true });
 
-    } catch (error) {
+    }  (error) {
       console.error(error);
       callback?.({ error: "Could not send message" });
     }
@@ -88,13 +88,13 @@ io.on("connection", (socket) => {
   // DISCONNECT USER
   socket.on("disconnect", () => {
 
-    const connections = onlineUsers.get(userId);
+     connections = onlineUsers.get(userId);
 
-    if (connections) {
+     (connections) {
       connections.delete(socket.id);
 
       // Only mark offline if no connections remain
-      if (connections.size === 0) {
+       (connections.size === 0) {
         onlineUsers.delete(userId);
         console.log("User offline:", userId);
       }
