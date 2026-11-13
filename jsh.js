@@ -1,17 +1,17 @@
 
-import React, { useState } from "react";
+ React, { useState } from "react";
 
-import {
+ {
   LiveKitRoom,
   VideoConference
 } from "@livekit/components-react";
 
-import "@livekit/components-styles";
+ "@livekit/components-styles";
 
-const API = "https://your-y-meta-api.com";
+ API = "https://your-y-meta-api.com";
 
-function VideoRoom({ token, serverUrl }) {
-  return (
+ VideoRoom({ token, serverUrl }) {
+   (
     <div style={{ height: "90vh" }}>
       <LiveKitRoom
         token={token}
@@ -30,21 +30,21 @@ function VideoRoom({ token, serverUrl }) {
   );
 }
 
-export default function App() {
-  const [phone, setPhone] = useState("");
-  const [call, setCall] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+   App() {
+   [phone, setPhone] = useState("");
+   [call, setCall] = useState();
+   [loading, setLoading] = useState(false);
+   [error, setError] = useState("");
 
-  const roomFromUrl =
+   roomFromUrl =
     window.location.pathname.match(/^\/call\/([a-f0-9-]+)$/i)?.[1];
 
-  async function startCall() {
+    startCall() {
     setLoading(true);
     setError("");
 
-    try {
-      const response = await fetch(API + "/api/calls", {
+     {
+       response =  fetch(API + "/api/calls", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -52,25 +52,25 @@ export default function App() {
         body: JSON.stringify({ phone })
       });
 
-      const data = await response.json();
+       data =  response.json();
 
-      if (!response.ok) throw new Error(data.error);
+       (!response.ok)   Error(data.error);
 
       setCall(data);
 
-    } catch (e) {
+    }  (e) {
       setError(e.message);
     }
 
     setLoading(false);
   }
 
-  async function joinCall() {
+    joinCall() {
     setLoading(true);
     setError("");
 
-    try {
-      const response = await fetch(API + "/api/token", {
+     {
+       response =  fetch(API + "/api/token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -80,21 +80,21 @@ export default function App() {
         })
       });
 
-      const data = await response.json();
+       data =  response.json();
 
-      if (!response.ok) throw new Error(data.error);
+       (!response.ok)   Error(data.error);
 
       setCall(data);
 
-    } catch (e) {
+    }  (e) {
       setError(e.message);
     }
 
     setLoading(false);
   }
 
-  if (call?.token) {
-    return (
+   (call?.token) {
+     (
       <VideoRoom
         token={call.token}
         serverUrl={call.serverUrl}
@@ -102,7 +102,7 @@ export default function App() {
     );
   }
 
-  return (
+   (
     <main className="app">
       <div className="logo">Y META</div>
 
@@ -117,7 +117,7 @@ export default function App() {
         </>
       ) : (
         <>
-          <h1>Connect with anyone</h1>
+          <h1>Connect  anyone</h1>
 
           <p>
             Make video calls to friends and family.
