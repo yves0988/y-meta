@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
+ express = require("express");
+ cors = require("cors");
 
-const app = express();
+ app = express();
 
 app.use(cors({
     origin: "https://yves0988.github.io"
@@ -24,7 +24,7 @@ app.get("/api/status", (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
+ PORT = process.env.PORT || 3000;
 
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`Y-META server running on port ${PORT}`);
