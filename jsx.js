@@ -1,15 +1,15 @@
 
-import React, { useState } from "react";
-import "./App.css";
+ React, { useState } from "react";
+ "./App.css";
 
-const people = [
+ people = [
   { id: 1, name: "Alex Morgan", avatar: "A" },
   { id: 2, name: "Sarah James", avatar: "S" },
   { id: 3, name: "David Kim", avatar: "D" },
   { id: 4, name: "Emma Wilson", avatar: "E" }
 ];
 
-const sections = [
+ sections = [
   ["home", "Home", "⌂"],
   ["messages", "Messages", "✉"],
   ["calls", "Calls", "☎"],
@@ -19,11 +19,11 @@ const sections = [
   ["settings", "Settings", "⚙"]
 ];
 
-export default function App() {
-  const [page, setPage] = useState("home");
-  const [dark, setDark] = useState(true);
-  const [name, setName] = useState("Y Meta User");
-  const [posts, setPosts] = useState([
+   App() {
+   [page, setPage] = useState("home");
+   [dark, setDark] = useState(true);
+   [name, setName] = useState("Y Meta User");
+   [posts, setPosts] = useState([
     {
       id: 1,
       author: "Alex Morgan",
@@ -32,20 +32,20 @@ export default function App() {
     }
   ]);
 
-  const [friends, setFriends] = useState([1, 2]);
-  const [messages, setMessages] = useState({});
-  const [selected, setSelected] = useState(1);
-  const [draft, setDraft] = useState("");
-  const [newMessage, setNewMessage] = useState("");
-  const [search, setSearch] = useState("");
-  const [notifications, setNotifications] = useState([
+   [friends, setFriends] = useState([1, 2]);
+   [messages, setMessages] = useState({});
+   [selected, setSelected] = useState(1);
+   [draft, setDraft] = useState("");
+   [newMessage, setNewMessage] = useState("");
+   [search, setSearch] = useState("");
+   [notifications, setNotifications] = useState([
     "Welcome to Y Meta!",
     "Alex Morgan joined Y Meta."
   ]);
-  const [call, setCall] = useState(null);
+   [call, setCall] = useState();
 
-  function publish() {
-    if (!draft.trim()) return;
+   publish() {
+     (!draft.trim()) ;
 
     setPosts([{
       id: Date.now(),
@@ -61,8 +61,8 @@ export default function App() {
     ]);
   }
 
-  function send() {
-    if (!newMessage.trim()) return;
+   send() {
+     (!newMessage.trim()) ;
 
     setMessages({
       ...messages,
@@ -75,8 +75,8 @@ export default function App() {
     setNewMessage("");
   }
 
-  function addFriend(id) {
-    if (!friends.includes(id)) {
+   addFriend(id) {
+     (!friends.includes(id)) {
       setFriends([...friends, id]);
       setNotifications([
         `You connected with ${people.find(p => p.id === id).name}.`,
@@ -85,9 +85,9 @@ export default function App() {
     }
   }
 
-  const person = people.find(p => p.id === selected);
+   person = people.find(p => p.id === selected);
 
-  return (
+   (
     <div className={dark ? "ymeta dark" : "ymeta light"}>
 
       <aside className="sidebar">
@@ -118,7 +118,7 @@ export default function App() {
         {page === "home" && (
           <section>
             <h1>Welcome to your world 💜</h1>
-            <p>Share your thoughts with your community.</p>
+            <p>Share your thoughts  your community.</p>
 
             <div className="card">
               <textarea
@@ -189,7 +189,7 @@ export default function App() {
         {page === "calls" && (
           <section>
             <h1>Voice and video calls</h1>
-            <p>Connect with friends wherever they are.</p>
+            <p>Connect  friends wherever they are.</p>
 
             {people.filter(p => friends.includes(p.id)).map(p => (
               <div className="card" key={p.id}>
@@ -253,8 +253,8 @@ export default function App() {
               <p>Welcome to my Y Meta profile.</p>
 
               <button onClick={() => {
-                const n = prompt("Your display name", name);
-                if (n?.trim()) setName(n.trim());
+                 n = prompt("Your display name", name);
+                 (n?.trim()) setName(n.trim());
               }}>
                 Edit profile
               </button>
@@ -294,7 +294,7 @@ export default function App() {
             <h2>Y Meta video call</h2>
             <h3>Calling {call.name}</h3>
             <p>This is a demonstration. Connect LiveKit to enable real calls.</p>
-            <button onClick={() => setCall(null)}>
+            <button onClick={() => setCall()}>
               End call
             </button>
           </div>
