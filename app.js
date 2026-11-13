@@ -66,7 +66,7 @@ leaveBtn.addEventListener("click", leaveCall);
       (track, publication, participant) => {
          element = track.attach();
 
-        if (track.kind === Track.Kind.Video) {
+         (track.kind === Track.Kind.Video) {
           element.dataset.participant = participant.identity;
           remoteVideos.appendChild(element);
         }  (track.kind === Track.Kind.Audio) {
@@ -93,7 +93,7 @@ leaveBtn.addEventListener("click", leaveCall);
     publications.forEach(publication => {
        (publication.track) {
         localVideo.srcObject =
-          new MediaStream(publication.track.mediaStreamTrack);
+           MediaStream(publication.track.mediaStreamTrack);
       }
     });
 
