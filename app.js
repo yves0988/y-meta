@@ -13,7 +13,7 @@
  status = document.getElementById("status");
  callStatus = document.getElementById("callStatus");
 
- room = null;
+ room = ;
  cameraOn = true;
  micOn = true;
 
@@ -53,7 +53,7 @@ leaveBtn.addEventListener("click", leaveCall);
       Error("Unable to get call access.");
     }
 
-     data = await response.json();
+     data =  response.json();
 
      { Room, RoomEvent, Track } = LivekitClient;
 
