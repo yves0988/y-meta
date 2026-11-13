@@ -1,24 +1,24 @@
 
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const session = require("express-session");
-const SQLiteStore = require("connect-sqlite3")(session);
-const bcrypt = require("bcrypt");
-const path = require("path");
+ express = require("express");
+ http = require("http");
+ { Server } = require("socket.io");
+ session = require("express-session");
+ SQLiteStore = require("connect-sqlite3")(session);
+ bcrypt = require("bcrypt");
+ path = require("path");
 
-const db = require("./database");
+ db = require("./database");
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+ app = express();
+ server = http.createServer(app);
+ io =  Server(server);
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // Create session storage
-const sessionMiddleware = session({
-  store: new SQLiteStore({
+ sessionMiddleware = session({
+  store:  SQLiteStore({
     db: "sessions.sqlite",
     dir: "./"
   }),
@@ -39,9 +39,9 @@ app.use(sessionMiddleware);
 io.engine.use(sessionMiddleware);
 
 // Check whether a user is logged in
-function requireLogin(req, res, next) {
-  if (!req.session.userId) {
-    return res.status(401).json({
+ requireLogin(req, res, next) {
+   (!req.session.userId) {
+     res.status(401).json({
       error: "Please log in first"
     });
   }
@@ -50,28 +50,25 @@ function requireLogin(req, res, next) {
 }
 
 // REGISTER
-app.post("/api/register", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+app.post("/api/register",  (req, res) => {
+   {
+     { username, password } = req.body;
 
-    if (
-      typeof username !== "string" ||
-      typeof password !== "string" ||
+     (
+       username !== "string" ||
+       password !== "string" ||
       !/^[a-zA-Z0-9_]{3,20}$/.test(username) ||
       password.length < 8 ||
       password.length > 72
     ) {
-      return res.status(400).json({
+       res.status(400).json({
         error: "Use a username of 3-20 letters, numbers or underscores and a password of 8-72 characters."
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+     hashedPassword =  bcrypt.hash(password, 12);
 
-    const result = db.prepare(`
-      INSERT INTO users (username, password)
-      VALUES (?, ?)
-    `).run(username, hashedPassword);
+     
 
     req.session.userId = Number(result.lastInsertRowid);
 
@@ -80,9 +77,9 @@ app.post("/api/register", async (req, res) => {
       username
     });
 
-  } catch (error) {
-    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
-      return res.status(409).json({
+  }  (error) {
+     (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+       res.status(409).json({
         error: "Username already exists"
       });
     }
@@ -92,32 +89,32 @@ app.post("/api/register", async (req, res) => {
 });
 
 // LOGIN
-app.post("/api/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+app.post("/api/login",  (req, res) => {
+   {
+     { username, password } = req.body;
 
-    if (
-      typeof username !== "string" ||
-      typeof password !== "string"
+     (
+       username !== "string" ||
+       password !== "string"
     ) {
-      return res.status(400).json({
+       res.status(400).json({
         error: "Enter username and password"
       });
     }
 
-    const user = db.prepare(
+     user = db.prepare(
       "SELECT * FROM users WHERE username = ?"
     ).get(username);
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return res.status(401).json({
+     (!user || !( bcrypt.compare(password, user.password))) {
+       res.status(401).json({
         error: "Incorrect username or password"
       });
     }
 
     req.session.regenerate((err) => {
-      if (err) {
-        return res.status(500).json({ error: "Login failed" });
+       (err) {
+         res.status(500).json({ error: "Login failed" });
       }
 
       req.session.userId = user.id;
@@ -128,19 +125,19 @@ app.post("/api/login", async (req, res) => {
       });
     });
 
-  } catch (error) {
+  }  (error) {
     res.status(500).json({ error: "Login failed" });
   }
 });
 
 // CHECK CURRENT USER
 app.get("/api/me", requireLogin, (req, res) => {
-  const user = db.prepare(
+   user = db.prepare(
     "SELECT id, username FROM users WHERE id = ?"
   ).get(req.session.userId);
 
-  if (!user) {
-    return res.status(401).json({ error: "User not found" });
+   (!user) {
+     res.status(401).json({ error: "User not found" });
   }
 
   res.json(user);
@@ -148,7 +145,7 @@ app.get("/api/me", requireLogin, (req, res) => {
 
 // GET ALL OTHER USERS
 app.get("/api/users", requireLogin, (req, res) => {
-  const users = db.prepare(`
+   users = db.prepare(`
     SELECT id, username
     FROM users
     WHERE id != ?
@@ -160,13 +157,13 @@ app.get("/api/users", requireLogin, (req, res) => {
 
 // GET CONVERSATION HISTORY
 app.get("/api/messages/:userId", requireLogin, (req, res) => {
-  const otherId = Number(req.params.userId);
+   otherId = Number(req.params.userId);
 
-  if (!Number.isSafeInteger(otherId) || otherId < 1) {
-    return res.status(400).json({ error: "Invalid user ID" });
+   (!Number.isSafeInteger(otherId) || otherId < 1) {
+     res.status(400).json({ error: "Invalid user ID" });
   }
 
-  const messages = db.prepare(`
+   messages = db.prepare(`
     SELECT id, sender_id, receiver_id, message, created_at
     FROM messages
     WHERE
@@ -195,10 +192,10 @@ app.post("/api/logout", (req, res) => {
 
 // SOCKET.IO AUTHENTICATION
 io.use((socket, next) => {
-  const userId = socket.request.session?.userId;
+   userId = socket.request.session?.userId;
 
-  if (!userId) {
-    return next(new Error("Not authenticated"));
+   (!userId) {
+     next( Error("Not authenticated"));
   }
 
   socket.userId = userId;
@@ -213,33 +210,33 @@ io.on("connection", (socket) => {
 
   // SEND MESSAGE
   socket.on("send_message", (data, callback) => {
-    try {
-      const receiverId = Number(data?.receiverId);
-      const message = data?.message;
+     {
+       receiverId = Number(data?.receiverId);
+       message = data?.message;
 
-      if (
+       (
         !Number.isSafeInteger(receiverId) ||
         receiverId < 1 ||
-        typeof message !== "string" ||
+         message !== "string" ||
         !message.trim() ||
         message.length > 2000
       ) {
-        return callback?.({
+         callback?.({
           error: "Invalid message"
         });
       }
 
-      const receiver = db.prepare(
+       receiver = db.prepare(
         "SELECT id FROM users WHERE id = ?"
       ).get(receiverId);
 
-      if (!receiver || receiverId === socket.userId) {
-        return callback?.({
+       (!receiver || receiverId === socket.userId) {
+         callback?.({
           error: "Invalid recipient"
         });
       }
 
-      const result = db.prepare(`
+       result = db.prepare(`
         INSERT INTO messages
         (sender_id, receiver_id, message)
         VALUES (?, ?, ?)
@@ -249,7 +246,7 @@ io.on("connection", (socket) => {
         message.trim()
       );
 
-      const savedMessage = db.prepare(`
+       savedMessage = db.prepare(`
         SELECT id, sender_id, receiver_id, message, created_at
         FROM messages WHERE id = ?
       `).get(Number(result.lastInsertRowid));
@@ -261,7 +258,7 @@ io.on("connection", (socket) => {
 
       callback?.({ success: true });
 
-    } catch (error) {
+    }  (error) {
       callback?.({ error: "Could not send message" });
     }
   });
@@ -272,7 +269,7 @@ io.on("connection", (socket) => {
 });
 
 // START SERVER
-const PORT = process.env.PORT || 3000;
+ PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
