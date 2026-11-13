@@ -1,13 +1,13 @@
 
-const express = require("express");
+ express = require("express");
 
-const app = express();
+ app = express();
 
 app.use(express.json());
 
 // Receive a message
 app.post("/send-message", (req, res) => {
-  const message = req.body.message;
+ message = req.body.message;
 
   console.log("New message:", message);
 
