@@ -1,8 +1,8 @@
 
-const Database = require("better-sqlite3");
+ Database = require("better-sqlite3");
 
 // Create the database file
-const db = new Database("chat.db");
+ db =  Database("chat.db");
 
 // Enable foreign keys
 db.pragma("foreign_keys = ON");
