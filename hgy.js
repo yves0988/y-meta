@@ -1,14 +1,14 @@
 
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import crypto from "crypto";
-import twilio from "twilio";
-import { AccessToken } from "livekit-server-sdk";
+ express from "express";
+ cors from "cors";
+ dotenv from "dotenv";
+ crypto from "crypto";
+ twilio from "twilio";
+ { AccessToken } from "livekit-server-sdk";
 
 dotenv.config();
 
-const app = express();
+ app = express();
 
 app.use(cors({
   origin: process.env.APP_URL
@@ -16,26 +16,26 @@ app.use(cors({
 
 app.use(express.json());
 
-const calls = new Map();
+ calls =  Map();
 
-const smsEnabled =
+ smsEnabled =
   process.env.TWILIO_ACCOUNT_SID &&
   process.env.TWILIO_AUTH_TOKEN &&
   process.env.TWILIO_PHONE_NUMBER;
 
-const sms = smsEnabled
+ sms = smsEnabled
   ? twilio(
       process.env.TWILIO_ACCOUNT_SID,
       process.env.TWILIO_AUTH_TOKEN
     )
-  : null;
+  : ;
 
-function validPhone(phone) {
-  return /^\+[1-9]\d{7,14}$/.test(phone);
+ validPhone(phone) {
+   /^\+[1-9]\d{7,14}$/.test(phone);
 }
 
-async function createToken(room, identity) {
-  const token = new AccessToken(
+  createToken(room, identity) {
+   token =  AccessToken(
     process.env.LIVEKIT_API_KEY,
     process.env.LIVEKIT_API_SECRET,
     {
@@ -51,36 +51,36 @@ async function createToken(room, identity) {
     canSubscribe: true
   });
 
-  return await token.toJwt();
+    token.toJwt();
 }
 
 // Start a video call
-app.post("/api/calls", async (req, res) => {
-  try {
-    const { phone } = req.body;
+app.post("/api/calls",  (req, res) => {
+   {
+     { phone } = req.body;
 
-    if (!validPhone(phone)) {
-      return res.status(400).json({
+     (!validPhone(phone)) {
+       res.status(400).json({
         error: "Enter a valid international phone number."
       });
     }
 
-    const room = crypto.randomUUID();
+     room = crypto.randomUUID();
 
-    const expiresAt = Date.now() + 30 * 60 * 1000;
+     expiresAt = Date.now() + 30 * 60 * 1000;
 
     calls.set(room, { expiresAt });
 
-    const token = await createToken(
+     token =  createToken(
       room,
       "caller-" + crypto.randomUUID()
     );
 
-    const inviteLink =
+     inviteLink =
       `${process.env.APP_URL}/call/${room}`;
 
-    if (sms) {
-      await sms.messages.create({
+     (sms) {
+       sms.messages.create({
         body:
           `You have received a Y Meta video call invitation. ` +
           `Open this link to join: ${inviteLink}`,
@@ -97,7 +97,7 @@ app.post("/api/calls", async (req, res) => {
       smsSent: Boolean(sms)
     });
 
-  } catch (error) {
+  }  (error) {
     console.error(error);
 
     res.status(500).json({
@@ -107,21 +107,21 @@ app.post("/api/calls", async (req, res) => {
 });
 
 // Receiver requests permission to enter the room
-app.post("/api/token", async (req, res) => {
-  try {
-    const { room } = req.body;
+app.post("/api/token",  (req, res) => {
+   {
+     { room } = req.body;
 
-    const call = calls.get(room);
+     call = calls.get(room);
 
-    if (!call || call.expiresAt < Date.now()) {
+     (!call || call.expiresAt < Date.now()) {
       calls.delete(room);
 
-      return res.status(404).json({
+       res.status(404).json({
         error: "This invitation has expired."
       });
     }
 
-    const token = await createToken(
+     token =  createToken(
       room,
       "guest-" + crypto.randomUUID()
     );
@@ -131,7 +131,7 @@ app.post("/api/token", async (req, res) => {
       serverUrl: process.env.LIVEKIT_URL
     });
 
-  } catch (error) {
+  }  (error) {
     res.status(500).json({
       error: "Unable to join call."
     });
@@ -143,8 +143,8 @@ app.get("/health", (req, res) => {
 });
 
 setInterval(() => {
-  for (const [room, call] of calls) {
-    if (call.expiresAt < Date.now()) {
+   ( [room, call] of calls) {
+     (call.expiresAt < Date.now()) {
       calls.delete(room);
     }
   }
