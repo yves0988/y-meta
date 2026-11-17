@@ -1,1 +1,1 @@
-https://y-meta-backend.onrender.com
+https://yves0988.github.io/y-meta/
