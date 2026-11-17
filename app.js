@@ -1,254 +1,144 @@
 const socket = io();
 
-const joinBtn = document.getElementById("joinBtn");
-const leaveBtn = document.getElementById("leaveBtn");
-const cameraBtn = document.getElementById("cameraBtn");
-const micBtn = document.getElementById("micBtn");
-
-const joinScreen = document.getElementById("joinScreen");
-const callScreen = document.getElementById("callScreen");
+const nameInput = document.getElementById("userName");
+const roomInput = document.getElementById("roomCode");
+const joinButton = document.getElementById("joinCall");
+const leaveButton = document.getElementById("leaveCall");
+const statusText = document.getElementById("status");
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
-const statusEl = document.getElementById("status");
-const callStatus = document.getElementById("callStatus");
-const callHistory = document.getElementById("callHistory");
-const feed = document.getElementById("feed");
-
-const callNameInput = document.getElementById("callName");
-const callRoomInput = document.getElementById("callRoom");
-const messageNameInput = document.getElementById("messageName");
-const messageText = document.getElementById("messageText");
 
 let localStream = null;
-let peers = {};
-let currentRoom = null;
-let myName = "";
-let cameraOn = true;
-let micOn = true;
+let peer = null;
+let joined = false;
 
-function showPage(pageId) {
-  const pages = document.querySelectorAll(".page");
-  pages.forEach((page) => {
-    page.classList.add("hidden");
+document.getElementById("generateCode").addEventListener("click", () => {
+  roomInput.value = String(Math.floor(100000 + Math.random() * 900000));
+  statusText.textContent = "Share this room code with the other person.";
+});
+
+function makePeer(isInitiator, otherUserId) {
+  peer = new SimplePeer({
+    initiator: isInitiator,
+    trickle: false,
+    stream: localStream,
+    config: {
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    }
   });
 
-  const target = document.getElementById(pageId);
-  if (target) {
-    target.classList.remove("hidden");
-  }
-}
+  peer.on("signal", (signal) => {
+    socket.emit("signal", { targetId: otherUserId, signal });
+  });
 
-function publishPost() {
-  const text = document.getElementById("postText").value.trim();
-  if (!text) return;
+  peer.on("stream", (stream) => {
+    remoteVideo.srcObject = stream;
+    statusText.textContent = "Call connected.";
+  });
 
-  const item = document.createElement("div");
-  item.className = "feed-item";
-  item.innerHTML = `<strong>You</strong><p>${text}</p>`;
-  feed.prepend(item);
+  peer.on("error", (error) => {
+    console.error("Peer connection error:", error);
+    statusText.textContent = "Call connection failed. Check network and server.";
+  });
 
-  document.getElementById("postText").value = "";
-}
-
-function sendMessage() {
-  const name = messageNameInput.value.trim();
-  const text = messageText.value.trim();
-
-  if (!name || !text) return;
-
-  const result = document.createElement("div");
-  result.className = "message-item";
-  result.innerHTML = `<strong>${name}</strong><p>${text}</p>`;
-  document.getElementById("messageResults").appendChild(result);
-
-  messageNameInput.value = "";
-  messageText.value = "";
-}
-
-function importContacts() {
-  const contacts = [
-    { name: "Aline", email: "aline@example.com", phone: "+250788000001" },
-    { name: "Eric", email: "eric@example.com", phone: "+250788000002" },
-    { name: "Maya", email: "maya@example.com", phone: "+250788000003" }
-  ];
-
-  const container = document.getElementById("contactResults");
-  container.innerHTML = "";
-
-  contacts.forEach((person) => {
-    const card = document.createElement("div");
-    card.className = "contact-card";
-    card.innerHTML = `
-      <strong>${person.name}</strong>
-      <p>${person.email}</p>
-      <p>${person.phone}</p>
-    `;
-    container.appendChild(card);
+  peer.on("close", () => {
+    remoteVideo.srcObject = null;
   });
 }
 
-function searchFriend() {
-  const query = document.getElementById("friendSearch").value.trim().toLowerCase();
-  const contacts = document.querySelectorAll(".contact-card");
-  contacts.forEach((card) => {
-    const text = card.textContent.toLowerCase();
-    card.style.display = text.includes(query) || !query ? "block" : "none";
-  });
-}
+joinButton.addEventListener("click", async () => {
+  const userName = nameInput.value.trim();
+  const roomId = roomInput.value.trim();
 
-function saveProfile() {
-  const name = document.getElementById("profileName").value.trim();
-  const email = document.getElementById("profileEmail").value.trim();
-  const status = document.getElementById("profileStatus");
-
-  if (!name || !email) {
-    status.textContent = "Please enter your name and email.";
+  if (!userName || !/^\d{4,12}$/.test(roomId)) {
+    statusText.textContent = "Enter your name and a 4–12 digit room code.";
     return;
   }
 
-  status.textContent = `Profile saved for ${name} (${email})`;
-}
+  if (!navigator.mediaDevices?.getUserMedia) {
+    statusText.textContent = "Camera needs localhost or an HTTPS website.";
+    return;
+  }
 
-function addCallToHistory(name) {
-  const item = document.createElement("div");
-  item.className = "call-item";
-  item.textContent = `${new Date().toLocaleTimeString()} - ${name}`;
-  callHistory.prepend(item);
-}
+  if (typeof SimplePeer === "undefined") {
+    statusText.textContent = "Call library did not load. Check your internet.";
+    return;
+  }
 
-async function startLocalCamera() {
+  joinButton.disabled = true;
+  statusText.textContent = "Requesting camera and microphone permission...";
+
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true
     });
-
     localVideo.srcObject = localStream;
-    localVideo.play();
-    statusEl.textContent = "Camera ready";
-  } catch (error) {
-    console.error("Could not access camera:", error);
-    statusEl.textContent = "Camera access denied. Please allow camera/mic.";
-  }
-}
 
-function createPeer(remoteUserId, initiator) {
-  const peer = new SimplePeer({
-    initiator,
-    trickle: false,
-    stream: localStream
-  });
+    socket.emit("join-room", { roomId, userName }, (result) => {
+      if (!result?.ok) {
+        stopCall();
+        joinButton.disabled = false;
+        statusText.textContent = result?.error || "Could not join the room.";
+        return;
+      }
 
-  peer.on("signal", (signal) => {
-    socket.emit("signal", {
-      targetId: remoteUserId,
-      signal
+      joined = true;
+      leaveButton.disabled = false;
+      statusText.textContent = `Joined room ${roomId}. Waiting for the other person...`;
     });
-  });
-
-  peer.on("stream", (stream) => {
-    remoteVideo.srcObject = stream;
-    remoteVideo.play();
-  });
-
-  peer.on("close", () => {
-    console.log("Peer closed:", remoteUserId);
-  });
-
-  return peer;
-}
-
-joinBtn.addEventListener("click", async () => {
-  myName = callNameInput.value.trim();
-  currentRoom = callRoomInput.value.trim();
-
-  if (!myName || !currentRoom) {
-    statusEl.textContent = "Please enter your name and room.";
-    return;
+  } catch (error) {
+    console.error(error);
+    stopCall();
+    joinButton.disabled = false;
+    statusText.textContent = "Camera/mic permission failed. Allow access and try again.";
   }
-
-  await startLocalCamera();
-
-  joinScreen.classList.add("hidden");
-  callScreen.classList.remove("hidden");
-
-  statusEl.textContent = "Connecting...";
-  socket.emit("join-room", {
-    roomId: currentRoom,
-    userName: myName
-  });
 });
 
-leaveBtn.addEventListener("click", () => {
-  Object.values(peers).forEach((peer) => peer.destroy());
-  peers = {};
+// The person already in the room starts the connection.
+socket.on("peer-joined", ({ userId, userName }) => {
+  if (peer || !localStream) return;
+
+  statusText.textContent = `${userName} joined. Connecting...`;
+  makePeer(true, userId);
+});
+
+// The joining person receives the first signal and responds.
+socket.on("signal", ({ from, signal }) => {
+  if (!peer) makePeer(false, from);
+  peer.signal(signal);
+});
+
+socket.on("peer-left", () => {
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
+  remoteVideo.srcObject = null;
+  statusText.textContent = "The other person left the call.";
+});
+
+function stopCall() {
+  if (peer) {
+    peer.destroy();
+    peer = null;
+  }
 
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());
+    localStream = null;
   }
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
+}
 
-  callScreen.classList.add("hidden");
-  joinScreen.classList.remove("hidden");
-  statusEl.textContent = "Call ended";
-  callStatus.textContent = "Call ended";
+leaveButton.addEventListener("click", () => {
+  if (joined) socket.emit("leave-room");
+  joined = false;
+  stopCall();
+
+  leaveButton.disabled = true;
+  joinButton.disabled = false;
+  statusText.textContent = "Call ended.";
 });
-
-cameraBtn.addEventListener("click", () => {
-  if (!localStream) return;
-
-  const videoTrack = localStream.getVideoTracks()[0];
-  if (!videoTrack) return;
-
-  cameraOn = !cameraOn;
-  videoTrack.enabled = cameraOn;
-
-  cameraBtn.textContent = cameraOn ? "Turn Camera Off" : "Turn Camera On";
-});
-
-micBtn.addEventListener("click", () => {
-  if (!localStream) return;
-
-  const audioTrack = localStream.getAudioTracks()[0];
-  if (!audioTrack) return;
-
-  micOn = !micOn;
-  audioTrack.enabled = micOn;
-
-  micBtn.textContent = micOn ? "Mute Microphone" : "Unmute Microphone";
-});
-
-socket.on("room-joined", ({ roomId, userId, userName }) => {
-  statusEl.textContent = `Connected to room: ${roomId}`;
-  callStatus.textContent = `You joined as ${userName}`;
-  addCallToHistory(userName);
-});
-
-socket.on("user-connected", ({ userId, userName }) => {
-  if (!peers[userId]) {
-    peers[userId] = createPeer(userId, true);
-  }
-
-  callStatus.textContent = `${userName} joined the room`;
-});
-
-socket.on("signal", ({ from, signal }) => {
-  if (!peers[from]) {
-    peers[from] = createPeer(from, false);
-  }
-
-  peers[from].signal(signal);
-});
-
-socket.on("user-disconnected", ({ userId }) => {
-  if (peers[userId]) {
-    peers[userId].destroy();
-    delete peers[userId];
-  }
-
-  callStatus.textContent = "A participant left the call";
-});
-
-showPage("home");
