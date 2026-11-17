@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+ React, { useState } from "react";
 
-function App() {
-  const [page, setPage] = useState("home");
+ App() {
+   [page, setPage] = useState("home");
 
-  const navigation = [
+   navigation = [
     { id: "home", label: "Home", icon: "🏠" },
     { id: "calls", label: "Calls", icon: "📞" },
     { id: "messages", label: "Messages", icon: "💬" },
@@ -12,7 +12,7 @@ function App() {
     { id: "profile", label: "Profile", icon: "👤" }
   ];
 
-  return (
+   (
     <div className="ymeta-app">
 
       <header>
@@ -83,4 +83,4 @@ function App() {
   );
 }
 
-export default App;
+ App;
