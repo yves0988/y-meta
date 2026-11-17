@@ -1,26 +1,26 @@
 
-let currentUser = null;
-let selectedUser = null;
-let socket = null;
+ currentUser = ;
+ selectedUser = ;
+ socket = ;
 
-const authScreen = document.getElementById("authScreen");
-const chatScreen = document.getElementById("chatScreen");
+ authScreen = document.getElementById("authScreen");
+ chatScreen = document.getElementById("chatScreen");
 
-const usernameInput = document.getElementById("username");
-const passwordInput = document.getElementById("password");
+ usernameInput = document.getElementById("username");
+ passwordInput = document.getElementById("password");
 
-const authError = document.getElementById("authError");
-const chatError = document.getElementById("chatError");
+ authError = document.getElementById("authError");
+ chatError = document.getElementById("chatError");
 
-const usersList = document.getElementById("usersList");
-const messagesBox = document.getElementById("messages");
-const chatTitle = document.getElementById("chatTitle");
+ usersList = document.getElementById("usersList");
+ messagesBox = document.getElementById("messages");
+ chatTitle = document.getElementById("chatTitle");
 
-const messageInput = document.getElementById("messageInput");
+ messageInput = document.getElementById("messageInput");
 
 // Send requests to our backend
-async function api(url, options = {}) {
-  const response = await fetch(url, {
+ api(url, options = {}) {
+   response =  fetch(url, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -28,21 +28,21 @@ async function api(url, options = {}) {
     }
   });
 
-  const data = await response.json();
+   data =  response.json();
 
-  if (!response.ok) {
-    throw new Error(data.error || "Something went wrong");
+   (!response.ok) {
+      Error(data.error || "Something went wrong");
   }
 
-  return data;
+   data;
 }
 
 // LOGIN
-document.getElementById("loginBtn").onclick = async () => {
-  try {
+document.getElementById("loginBtn").onclick =  () => {
+   {
     authError.textContent = "";
 
-    await api("/api/login", {
+     api("/api/login", {
       method: "POST",
       body: JSON.stringify({
         username: usernameInput.value,
@@ -50,19 +50,19 @@ document.getElementById("loginBtn").onclick = async () => {
       })
     });
 
-    await startChat();
+     startChat();
 
-  } catch (error) {
+  }  (error) {
     authError.textContent = error.message;
   }
 };
 
 // REGISTER
-document.getElementById("registerBtn").onclick = async () => {
-  try {
+document.getElementById("registerBtn").onclick =  () => {
+   {
     authError.textContent = "";
 
-    await api("/api/register", {
+     api("/api/register", {
       method: "POST",
       body: JSON.stringify({
         username: usernameInput.value,
@@ -70,16 +70,16 @@ document.getElementById("registerBtn").onclick = async () => {
       })
     });
 
-    await startChat();
+     startChat();
 
-  } catch (error) {
+  }  (error) {
     authError.textContent = error.message;
   }
 };
 
 // START THE CHAT APPLICATION
-async function startChat() {
-  currentUser = await api("/api/me");
+ startChat() {
+  currentUser =  api("/api/me");
 
   authScreen.hidden = true;
   chatScreen.hidden = false;
@@ -96,7 +96,7 @@ async function startChat() {
 
   // Receive new messages
   socket.on("new_message", (message) => {
-    if (
+     (
       selectedUser &&
       (
         (message.sender_id === selectedUser.id &&
@@ -109,17 +109,17 @@ async function startChat() {
     }
   });
 
-  await loadUsers();
+   loadUsers();
 }
 
 // LOAD USERS
-async function loadUsers() {
-  const users = await api("/api/users");
+ loadUsers() {
+   users =  api("/api/users");
 
   usersList.replaceChildren();
 
   users.forEach(user => {
-    const button = document.createElement("button");
+     button = document.createElement("button");
 
     button.className = "user";
     button.textContent = user.username;
@@ -131,7 +131,7 @@ async function loadUsers() {
 }
 
 // SELECT A USER
-async function selectUser(user, button) {
+ selectUser(user, button) {
   selectedUser = user;
 
   document.querySelectorAll(".user").forEach(item => {
@@ -144,28 +144,28 @@ async function selectUser(user, button) {
   messagesBox.replaceChildren();
   chatError.textContent = "";
 
-  try {
-    const history = await api(
+   {
+     history =  api(
       "/api/messages/" + encodeURIComponent(user.id)
     );
 
     // Ignore an old request if another conversation was selected
-    if (selectedUser.id !== user.id) return;
+     (selectedUser.id !== user.id) ;
 
     history.forEach(displayMessage);
 
-  } catch (error) {
+  }  (error) {
     chatError.textContent = error.message;
   }
 }
 
 // DISPLAY A MESSAGE
-function displayMessage(message) {
-  const div = document.createElement("div");
+ displayMessage(message) {
+   div = document.createElement("div");
 
   div.className = "message";
 
-  if (message.sender_id === currentUser.id) {
+   (message.sender_id === currentUser.id) {
     div.classList.add("mine");
   }
 
@@ -181,14 +181,14 @@ function displayMessage(message) {
 document.getElementById("messageForm").onsubmit = (event) => {
   event.preventDefault();
 
-  if (!selectedUser || !socket?.connected) {
+   (!selectedUser || !socket?.connected) {
     chatError.textContent = "Select a user and connect first.";
-    return;
+    ;
   }
 
-  const message = messageInput.value.trim();
+   message = messageInput.value.trim();
 
-  if (!message) return;
+   (!message) ;
 
   chatError.textContent = "";
 
@@ -196,9 +196,9 @@ document.getElementById("messageForm").onsubmit = (event) => {
     receiverId: selectedUser.id,
     message: message
   }, (result) => {
-    if (result?.error) {
+     (result?.error) {
       chatError.textContent = result.error;
-    } else {
+    }  {
       messageInput.value = "";
       messageInput.focus();
     }
@@ -206,16 +206,16 @@ document.getElementById("messageForm").onsubmit = (event) => {
 };
 
 // LOGOUT
-document.getElementById("logoutBtn").onclick = async () => {
-  try {
-    await api("/api/logout", {
+document.getElementById("logoutBtn").onclick =  () => {
+   {
+     api("/api/logout", {
       method: "POST"
     });
 
-    if (socket) socket.disconnect();
+     (socket) socket.disconnect();
 
-    currentUser = null;
-    selectedUser = null;
+    currentUser = ;
+    selectedUser = ;
 
     chatScreen.hidden = true;
     authScreen.hidden = false;
@@ -225,17 +225,17 @@ document.getElementById("logoutBtn").onclick = async () => {
     usersList.replaceChildren();
     messagesBox.replaceChildren();
 
-  } catch (error) {
+  }  (error) {
     chatError.textContent = error.message;
   }
 };
 
 // CHECK IF USER IS ALREADY LOGGED IN
-async function checkLogin() {
-  try {
-    await api("/api/me");
-    await startChat();
-  } catch (error) {
+  checkLogin() {
+   {
+     api("/api/me");
+     startChat();
+  }  (error) {
     authScreen.hidden = false;
     chatScreen.hidden = true;
   }
