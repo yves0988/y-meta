@@ -1,67 +1,73 @@
+require("dotenv").config();
+
 const express = require("express");
-const http = require("http");
 const path = require("path");
-const { Server } = require("socket.io");
+const twilio = require("twilio");
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, "public")));
 
-app.use(express.static(path.join(__dirname)));
+const requiredEnv = [
+  "TWILIO_ACCOUNT_SID",
+  "TWILIO_API_KEY_SID",
+  "TWILIO_API_KEY_SECRET",
+  "TWILIO_TWIML_APP_SID",
+  "TWILIO_CALLER_ID"
+];
 
-io.on("connection", (socket) => {
-  socket.on("join-room", ({ roomId, userName }, reply) => {
-    const room = String(roomId || "").trim();
-    const name = String(userName || "").trim();
-
-    if (!/^\d{4,12}$/.test(room) || !name) {
-      reply?.({ ok: false, error: "Enter your name and a 4–12 digit room code." });
-      return;
-    }
-
-    const members = io.sockets.adapter.rooms.get(room);
-    if (members && members.size >= 2) {
-      reply?.({ ok: false, error: "This demo room already has two people." });
-      return;
-    }
-
-    socket.join(room);
-    socket.data.roomId = room;
-    socket.data.userName = name;
-
-    // Notify the first person so they can start the peer connection.
-    socket.to(room).emit("peer-joined", {
-      userId: socket.id,
-      userName: name
-    });
-
-    reply?.({ ok: true, roomId: room });
-  });
-
-  socket.on("signal", ({ targetId, signal } = {}) => {
-    const room = socket.data.roomId;
-    const target = io.sockets.sockets.get(targetId);
-
-    // Only relay signals to someone in the same room.
-    if (room && target?.data.roomId === room) {
-      target.emit("signal", { from: socket.id, signal });
-    }
-  });
-
-  function leaveRoom() {
-    const room = socket.data.roomId;
-    if (!room) return;
-
-    socket.to(room).emit("peer-left");
-    socket.leave(room);
-    delete socket.data.roomId;
+for (const key of requiredEnv) {
+  if (!process.env[key]) {
+    console.error(`Missing ${key} in .env`);
+    process.exit(1);
   }
+}
 
-  socket.on("leave-room", leaveRoom);
-  socket.on("disconnect", leaveRoom);
+// Browser requests a short-lived access token from the server.
+// Keep Twilio secrets on the server, never in the browser.
+app.get("/token", (_req, res) => {
+  const identity = `ymeta-${Math.random().toString(36).slice(2, 12)}`;
+
+  const token = new twilio.jwt.AccessToken(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_API_KEY_SID,
+    process.env.TWILIO_API_KEY_SECRET,
+    { identity, ttl: 3600 }
+  );
+
+  token.addGrant(
+    new twilio.jwt.AccessToken.VoiceGrant({
+      outgoingApplicationSid: process.env.TWILIO_TWIML_APP_SID
+    })
+  );
+
+  res.json({ token: token.toJwt() });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Y-META running at http://localhost:${PORT}`);
+// Twilio requests these instructions when the browser starts a call.
+app.post("/voice", (req, res) => {
+  const to = String(req.body.To || "").trim();
+
+  // Require international E.164 format, e.g. +2507XXXXXXXX.
+  if (!/^\+[1-9]\d{7,14}$/.test(to)) {
+    return res
+      .status(400)
+      .type("text/plain")
+      .send("Enter a valid phone number in international format, e.g. +2507XXXXXXXX.");
+  }
+
+  const response = new twilio.twiml.VoiceResponse();
+  const dial = response.dial({
+    callerId: process.env.TWILIO_CALLER_ID
+  });
+
+  dial.number(to);
+
+  res.type("text/xml").send(response.toString());
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Y-META server running at http://localhost:${port}`);
 });
