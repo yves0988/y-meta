@@ -1,168 +1,155 @@
+const joinBtn = document.getElementById("joinBtn");
+const leaveBtn = document.getElementById("leaveBtn");
+const cameraBtn = document.getElementById("cameraBtn");
+const micBtn = document.getElementById("micBtn");
 
- joinBtn = document.getElementById("joinBtn");
- leaveBtn = document.getElementById("leaveBtn");
- cameraBtn = document.getElementById("cameraBtn");
- micBtn = document.getElementById("micBtn");
+const joinScreen = document.getElementById("joinScreen");
+const callScreen = document.getElementById("callScreen");
+const localVideo = document.getElementById("localVideo");
+const remoteVideos = document.getElementById("remoteVideos");
+const statusEl = document.getElementById("status");
+const callStatus = document.getElementById("callStatus");
 
- joinScreen = document.getElementById("joinScreen");
- callScreen = document.getElementById("callScreen");
+let room = null;
+let cameraOn = true;
+let micOn = true;
 
- localVideo = document.getElementById("localVideo");
- remoteVideos = document.getElementById("remoteVideos");
+// Iyi URL ikora gusa niba backend iri kuri computer yawe.
+const API_URL = "http://localhost:3000";
 
- status = document.getElementById("status");
- callStatus = document.getElementById("callStatus");
+if (
+  !joinBtn || !leaveBtn || !cameraBtn || !micBtn ||
+  !joinScreen || !callScreen || !localVideo || !remoteVideos ||
+  !statusEl || !callStatus
+) {
+  console.error("One or more call-page HTML elements are missing.");
+} else {
+  joinBtn.addEventListener("click", joinCall);
+  leaveBtn.addEventListener("click", leaveCall);
 
- room = ;
- cameraOn = true;
- micOn = true;
+  cameraBtn.addEventListener("click", async () => {
+    if (!room) return;
 
- API_URL = "http://localhost:3000";
+    try {
+      cameraOn = !cameraOn;
+      await room.localParticipant.setCameraEnabled(cameraOn);
+      cameraBtn.textContent = cameraOn ? "Turn Camera Off" : "Turn Camera On";
+    } catch (error) {
+      console.error("Could not change camera state:", error);
+    }
+  });
 
-joinBtn.addEventListener("click", joinCall);
-leaveBtn.addEventListener("click", leaveCall);
+  micBtn.addEventListener("click", async () => {
+    if (!room) return;
 
- joinCall() {
- username =
-    document.getElementById("username").value.trim();
+    try {
+      micOn = !micOn;
+      await room.localParticipant.setMicrophoneEnabled(micOn);
+      micBtn.textContent = micOn ? "Mute Microphone" : "Unmute Microphone";
+    } catch (error) {
+      console.error("Could not change microphone state:", error);
+    }
+  });
+}
 
- roomName =
-    document.getElementById("roomName").value.trim();
+async function joinCall() {
+  const username = document.getElementById("username")?.value.trim();
+  const roomName = document.getElementById("roomName")?.value.trim();
 
-   (!username || !roomName) {
-    status.textContent = "Enter your name and call room.";
-    ;
+  if (!username || !roomName) {
+    statusEl.textContent = "Enter your name and call room.";
+    return;
+  }
+
+  if (!window.LivekitClient) {
+    statusEl.textContent = "LiveKit client library is not loaded.";
+    return;
   }
 
   joinBtn.disabled = true;
-  status.textContent = "Connecting...";
+  statusEl.textContent = "Connecting...";
 
-   {
-     response =  fetch(`${API_URL}/get-token`, {
+  try {
+    const response = await fetch(`${API_URL}/get-token`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        identity: username,
-        room: roomName
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identity: username, room: roomName })
     });
 
-     (!response.ok) {
-      Error("Unable to get call access.");
+    if (!response.ok) {
+      throw new Error("Unable to get call access. Check the backend.");
     }
 
-     data =  response.json();
+    const data = await response.json();
+    const { Room, RoomEvent, Track } = window.LivekitClient;
 
-     { Room, RoomEvent, Track } = LivekitClient;
+    room = new Room({ adaptiveStream: true, dynacast: true });
 
-    room =  Room({
-      adaptiveStream: true,
-      dynacast: true
+    room.on(RoomEvent.TrackSubscribed, (track, publication, participant) => {
+      const element = track.attach();
+
+      if (track.kind === Track.Kind.Video) {
+        element.dataset.participant = participant.identity;
+        remoteVideos.appendChild(element);
+      } else if (track.kind === Track.Kind.Audio) {
+        document.body.appendChild(element);
+      }
     });
 
-    room.on(RoomEvent.TrackSubscribed,
-      (track, publication, participant) => {
-         element = track.attach();
-
-         (track.kind === Track.Kind.Video) {
-          element.dataset.participant = participant.identity;
-          remoteVideos.appendChild(element);
-        }  (track.kind === Track.Kind.Audio) {
-          document.body.appendChild(element);
-        }
-      }
-    );
-
     room.on(RoomEvent.TrackUnsubscribed, (track) => {
-      track.detach().forEach(element => element.remove());
+      track.detach().forEach((element) => element.remove());
     });
 
     room.on(RoomEvent.Disconnected, () => {
       callStatus.textContent = "Call disconnected.";
     });
 
-     room.connect(data.serverUrl, data.token);
+    room.on(RoomEvent.ParticipantConnected, (participant) => {
+      callStatus.textContent = `${participant.identity} joined the call!`;
+    });
 
-     room.localParticipant.enableCameraAndMicrophone();
+    room.on(RoomEvent.ParticipantDisconnected, (participant) => {
+      callStatus.textContent = `${participant.identity} left the call.`;
+    });
 
-     publications =
-      room.localParticipant.videoTrackPublications;
+    await room.connect(data.serverUrl, data.token);
+    await room.localParticipant.enableCameraAndMicrophone();
 
-    publications.forEach(publication => {
-       (publication.track) {
-        localVideo.srcObject =
-           MediaStream(publication.track.mediaStreamTrack);
+    room.localParticipant.videoTrackPublications.forEach((publication) => {
+      if (publication.track) {
+        publication.track.attach(localVideo);
       }
     });
 
     joinScreen.classList.add("hidden");
     callScreen.classList.remove("hidden");
-
     callStatus.textContent = "Connected! Waiting for your friend...";
-
-    room.on(RoomEvent.ParticipantConnected, participant => {
-      callStatus.textContent =
-        participant.identity + " joined the call!";
-    });
-
-    room.on(RoomEvent.ParticipantDisconnected, participant => {
-      callStatus.textContent =
-        participant.identity + " left the call.";
-    });
-
-  }  (error) {
+  } catch (error) {
     console.error(error);
-    status.textContent = error.message;
-     (room) {
-       room.disconnect();
-      room = ;
+    statusEl.textContent = error.message || "Could not join the call.";
+
+    if (room) {
+      room.disconnect();
+      room = null;
     }
-  }  {
+  } finally {
     joinBtn.disabled = false;
   }
 }
 
-cameraBtn.addEventListener("click",  () => {
-   (!room) ;
-
-  cameraOn = !cameraOn;
-
-  room.localParticipant.setCameraEnabled(cameraOn);
-
-  cameraBtn.textContent = cameraOn
-    ? "Turn Camera Off"
-    : "Turn Camera On";
-});
-
-micBtn.addEventListener("click",  () => {
-   (!room) ;
-
-  micOn = !micOn;
-
-   room.localParticipant.setMicrophoneEnabled(micOn);
-
-  micBtn.textContent = micOn
-    ? "Mute Microphone"
-    : "Unmute Microphone";
-});
-
- leaveCall() {
-   (room) {
-     room.disconnect();
-    room = ;
+function leaveCall() {
+  if (room) {
+    room.disconnect();
+    room = null;
   }
 
-  localVideo.srcObject = ;
+  localVideo.srcObject = null;
   remoteVideos.innerHTML = "";
-
   joinScreen.classList.remove("hidden");
   callScreen.classList.add("hidden");
 
   cameraOn = true;
   micOn = true;
-
   cameraBtn.textContent = "Turn Camera Off";
   micBtn.textContent = "Mute Microphone";
 }
