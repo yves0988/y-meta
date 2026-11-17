@@ -3,40 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Hamagara kuri Y-META</title>
+  <title>Y-META — Call</title>
+  <style>
+    body {
+      max-width: 520px;
+      margin: 40px auto;
+      padding: 0 16px;
+      font-family: Arial, sans-serif;
+    }
+
+    input, button {
+      box-sizing: border-box;
+      display: block;
+      width: 100%;
+      margin: 12px 0;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #status {
+      min-height: 24px;
+    }
+  </style>
 </head>
 <body>
-  <h1>Hamagara kuri Y-META</h1>
+  <h1>Y-META — Hamagara</h1>
+  <p>
+    Andika nimero mu buryo mpuzamahanga, urugero
+    <strong>+2507XXXXXXXX</strong>, uhitemo app ushaka gukoresha.
+  </p>
 
-  <label for="phoneNumber">Nimero ya telefone</label>
-  <input
-    id="phoneNumber"
-    type="tel"
-    placeholder="+2507XXXXXXXX"
-    autocomplete="tel"
-  >
+  <label for="phone">Nimero ya telefone</label>
+  <input id="phone" type="tel" placeholder="+2507XXXXXXXX" autocomplete="tel">
 
-  <button id="callButton" type="button">Hamagara</button>
-  <p id="status" role="status"></p>
+  <button id="faceTime" type="button">Fungura FaceTime</button>
+  <button id="whatsApp" type="button">Fungura WhatsApp</button>
+  <button id="phoneCall" type="button">Fungura phone dialer</button>
+
+  <p id="status" role="status">Andika nimero ubanze.</p>
 
   <script>
-    const phoneInput = document.getElementById("phoneNumber");
-    const status = document.getElementById("status");
+    const phoneInput = document.getElementById("phone");
+    const statusText = document.getElementById("status");
 
-    document.getElementById("callButton").addEventListener("click", () => {
-      const number = phoneInput.value.trim();
+    function getNumber() {
+      const input = phoneInput.value.trim();
 
-      // Andika nimero mu buryo mpuzamahanga, urugero +2507XXXXXXXX.
-      if (!/^\+[1-9]\d{7,14}$/.test(number)) {
-        status.textContent =
-          "Andika nimero yemewe, urugero +2507XXXXXXXX.";
-        return;
+      // E.164: + ikurikirwa n'imibare 8–15.
+      if (!/^\+[1-9]\d{7,14}$/.test(input)) {
+        statusText.textContent =
+          "Andika nimero yuzuye, urugero +2507XXXXXXXX.";
+        return null;
       }
 
-      status.textContent =
-        "Telefone irafungura dialer. Emeza call kuri telefone yawe.";
+      return input;
+    }
 
-      window.location.href = `tel:${number}`;
+    document.getElementById("faceTime").addEventListener("click", () => {
+      const number = getNumber();
+      if (!number) return;
+
+      statusText.textContent =
+        "Turimo gufungura FaceTime. Emeza call muri FaceTime.";
+      window.location.href = "facetime://" + encodeURIComponent(number);
+    });
+
+    document.getElementById("whatsApp").addEventListener("click", () => {
+      const number = getNumber();
+      if (!number) return;
+
+      // WhatsApp link ikoresha imibare gusa, nta + cyangwa spaces.
+      const digits = number.replace(/\D/g, "");
+      statusText.textContent =
+        "WhatsApp irafungura chat. Kanda voice/video call muri WhatsApp.";
+      window.open("https://wa.me/" + digits, "_blank", "noopener");
+    });
+
+    document.getElementById("phoneCall").addEventListener("click", () => {
+      const number = getNumber();
+      if (!number) return;
+
+      statusText.textContent =
+        "Dialer irafunguka niba Mac yawe ifite calling app ihujwe na tel:.";
+      window.location.href = "tel:" + number;
     });
   </script>
 </body>
