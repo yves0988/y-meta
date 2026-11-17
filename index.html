@@ -1,36 +1,146 @@
 <!doctype html>
-<html lang="en">
+<html lang="rw">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Y-META Call Room</title>
+  <title>Y-META Internet Call</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 760px; margin: 30px auto; padding: 0 16px; }
-    input, button { display: block; margin: 10px 0; padding: 10px; }
-    video { width: min(100%, 340px); background: #111; margin: 8px; }
-    .videos { display: flex; flex-wrap: wrap; }
+    body {
+      max-width: 520px;
+      margin: 40px auto;
+      padding: 0 16px;
+      font-family: Arial, sans-serif;
+    }
+
+    input, button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      margin: 12px 0;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      background: #2458d3;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #status {
+      min-height: 24px;
+    }
   </style>
 </head>
 <body>
-  <h1>Y-META Video Call</h1>
-  <p>Room code ni code yo muri app, si nimero ya telefone.</p>
+  <h1>Y-META — Hamagara ukoresheje internet</h1>
+  <p>
+    Andika nimero mu buryo mpuzamahanga, urugero
+    <strong>+2507XXXXXXXX</strong>. Kanda Hamagara, hanyuma wemere microphone.
+  </p>
 
-  <input id="userName" placeholder="Your name">
-  <input id="roomCode" inputmode="numeric" placeholder="Room code, e.g. 482193">
+  <label for="phoneNumber">Nimero uhamagara</label>
+  <input
+    id="phoneNumber"
+    type="tel"
+    autocomplete="tel"
+    placeholder="+2507XXXXXXXX"
+  >
 
-  <button id="generateCode" type="button">Generate room code</button>
-  <button id="joinCall" type="button">Join call</button>
-  <button id="leaveCall" type="button" disabled>End call</button>
+  <button id="callButton" type="button">Hamagara</button>
+  <button id="endButton" type="button" disabled>Hagarika call</button>
+  <p id="status" role="status">Witeguye.</p>
 
-  <p id="status">Not connected.</p>
+  <script src="https://sdk.twilio.com/js/voice/releases/2.11.1/twilio.min.js"></script>
+  <script>
+    const callButton = document.getElementById("callButton");
+    const endButton = document.getElementById("endButton");
+    const numberInput = document.getElementById("phoneNumber");
+    const statusText = document.getElementById("status");
 
-  <div class="videos">
-    <div><p>You</p><video id="localVideo" autoplay muted playsinline></video></div>
-    <div><p>Other person</p><video id="remoteVideo" autoplay playsinline></video></div>
-  </div>
+    let device;
+    let activeCall;
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
-  <script src="/app.js"></script>
+    async function setupDevice() {
+      const response = await fetch("/token");
+
+      if (!response.ok) {
+        throw new Error("Server ntiyashoboye gutanga call token.");
+      }
+
+      const { token } = await response.json();
+
+      if (!window.Twilio?.Device) {
+        throw new Error("Twilio Voice SDK ntiyafungutse. Reba internet.");
+      }
+
+      device = new Twilio.Device(token);
+      await device.register();
+    }
+
+    callButton.addEventListener("click", async () => {
+      const number = numberInput.value.trim();
+
+      if (!/^\+[1-9]\d{7,14}$/.test(number)) {
+        statusText.textContent =
+          "Andika nimero yemewe mu buryo mpuzamahanga, urugero +2507XXXXXXXX.";
+        return;
+      }
+
+      callButton.disabled = true;
+      statusText.textContent = "Turimo gutegura call...";
+
+      try {
+        if (!device) {
+          await setupDevice();
+        }
+
+        // Iyi action isaba microphone permission kandi itangiza outbound call.
+        activeCall = await device.connect({
+          params: { To: number }
+        });
+
+        activeCall.on("accept", () => {
+          statusText.textContent = `Call ihujwe na ${number}.`;
+          endButton.disabled = false;
+        });
+
+        activeCall.on("disconnect", () => {
+          statusText.textContent = "Call irangiye.";
+          activeCall = null;
+          callButton.disabled = false;
+          endButton.disabled = true;
+        });
+
+        activeCall.on("error", (error) => {
+          console.error(error);
+          statusText.textContent = "Call yanze. Reba nimero, Twilio settings na internet.";
+          activeCall = null;
+          callButton.disabled = false;
+          endButton.disabled = true;
+        });
+
+        statusText.textContent = "Turimo guhamagara...";
+      } catch (error) {
+        console.error(error);
+        statusText.textContent = error.message || "Call ntiyatangiye.";
+        callButton.disabled = false;
+        endButton.disabled = true;
+      }
+    });
+
+    endButton.addEventListener("click", () => {
+      if (activeCall) {
+        activeCall.disconnect();
+      }
+    });
+  </script>
 </body>
 </html>
