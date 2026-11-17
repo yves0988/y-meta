@@ -1,13 +1,13 @@
 {
-  "name": "y-meta",
+  "name": "y-meta-voice",
   "version": "1.0.0",
-  "description": "Y-META app with home page, contact list, and video call room",
+    "description": "Y-META app with home page, contact list, and video call
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "socket.io": "^4.8.1",
-    "simple-peer": "^9.11.1"
+    "twilio": "^5.4.0"
   }
 }
