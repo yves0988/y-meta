@@ -1,16 +1,227 @@
-<section id="ymeta-video-call">
-  <h2>Y-META Video Call</h2>
-  <p>
-    Kora video-call link uyisangize uwo ushaka guhamagara.
-    Na we agomba gufungura link muri browser, akanda Join.
-  </p>
+<!doctype html>
+<html lang="rw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Y-META | Connect Face to Face</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  <label for="callName">Izina ryawe</label>
-  <input id="callName" type="text" placeholder="Andika izina ryawe">
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0b1020;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-  <button id="startVideoCall" type="button">Tangira / Join video call</button>
-  <button id="copyCallLink" type="button" disabled>Copy invitation link</button>
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #132447;
+      padding: 14px 20px;
+      border-bottom: 1px solid #23375b;
+      gap: 16px;
+    }
 
-  <p id="videoCallStatus" role="status">Witeguye.</p>
-  <div id="jitsiMeeting"></div>
-</section>
+    .topbar h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    #search {
+      flex: 1;
+      max-width: 500px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .top-actions button,
+    .navigation button,
+    .quick-actions button,
+    .post-box button,
+    .sidebar button,
+    #startVideoCall,
+    #copyLink {
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .navigation {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 20px;
+      background: #111827;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: 70vh;
+    }
+
+    .sidebar {
+      background: #0f172a;
+      padding: 18px 12px;
+      border-right: 1px solid #23375b;
+    }
+
+    .sidebar h3 {
+      margin-top: 0;
+    }
+
+    .sidebar button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      background: #1f2937;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .page.hidden {
+      display: none;
+    }
+
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(140px, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .stories {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .story {
+      width: 90px;
+      height: 120px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .post-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #374151;
+      background: #111827;
+      color: white;
+    }
+
+    #feed, #messageResults, #contactResults, #callHistory {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feed-item,
+    .message-item,
+    .contact-card,
+    .call-item {
+      background: #111827;
+      border: 1px solid #23375b;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .video-card,
+    .ad-space {
+      background: #111827;
+      border: 1px solid #23375b;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 18px;
+    }
+
+    #ymeta-video-call {
+      margin-top: 24px;
+      padding: 20px;
+      background: #111827;
+      border: 1px solid #23375b;
+      border-radius: 14px;
+    }
+
+    #ymeta-video-call input,
+    #ymeta-video-call button {
+      max-width: 500px;
+    }
+
+    #jitsiMeeting {
+      width: 100%;
+      height: 650px;
+      margin-top: 20px;
+      background: #040b17;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #videoCallStatus {
+      min-height: 24px;
+      margin-top: 12px;
+      color: #dbeafe;
+    }
+
+    footer {
+      padding: 20px;
+      text-align: center;
+      color: #9ca3af;
+      border-top: 1px solid #23375b;
+      background: #0f172a;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid #23375b;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Y-META</h1*
+
