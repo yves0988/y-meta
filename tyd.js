@@ -2,7 +2,7 @@
 socket.on("online_users", (userIds) => {
 
   // Save online user IDs
-  onlineUserIds = new Set(userIds);
+  onlineUserIds =  Set(userIds);
 
   // Update the user list
   renderUsers();
