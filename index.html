@@ -3,35 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Y-META Internet Call</title>
+  <title>Y-META Video Call</title>
   <style>
     body {
-      max-width: 520px;
-      margin: 40px auto;
+      max-width: 760px;
+      margin: 24px auto;
       padding: 0 16px;
       font-family: Arial, sans-serif;
     }
 
     input, button {
+      box-sizing: border-box;
       display: block;
       width: 100%;
-      box-sizing: border-box;
-      margin: 12px 0;
+      margin: 10px 0;
       padding: 12px;
       font-size: 16px;
     }
 
     button {
-      border: 0;
-      border-radius: 8px;
-      background: #2458d3;
-      color: white;
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
+    #meeting {
+      min-height: 500px;
+      margin-top: 20px;
     }
 
     #status {
@@ -40,106 +36,99 @@
   </style>
 </head>
 <body>
-  <h1>Y-META — Hamagara ukoresheje internet</h1>
+  <h1>Y-META Video Call</h1>
   <p>
-    Andika nimero mu buryo mpuzamahanga, urugero
-    <strong>+2507XXXXXXXX</strong>. Kanda Hamagara, hanyuma wemere microphone.
+    Andika nimero y’uwo utumira. Azahabwa link, ayifungure muri browser,
+    yemere camera na microphone, maze yinjire muri video call.
   </p>
 
-  <label for="phoneNumber">Nimero uhamagara</label>
-  <input
-    id="phoneNumber"
-    type="tel"
-    autocomplete="tel"
-    placeholder="+2507XXXXXXXX"
-  >
+  <label for="myName">Izina ryawe</label>
+  <input id="myName" placeholder="Andika izina ryawe">
 
-  <button id="callButton" type="button">Hamagara</button>
-  <button id="endButton" type="button" disabled>Hagarika call</button>
+  <label for="phoneNumber">Nimero y’uwo utumira (urugero +2507...)</label>
+  <input id="phoneNumber" type="tel" placeholder="+2507XXXXXXXX">
+
+  <button id="startButton" type="button">Tangira video call</button>
+  <button id="inviteButton" type="button" disabled>
+    Fungura ubutumwa bwohereza invitation
+  </button>
+
   <p id="status" role="status">Witeguye.</p>
+  <div id="meeting"></div>
 
-  <script src="https://sdk.twilio.com/js/voice/releases/2.11.1/twilio.min.js"></script>
+  <script src="https://meet.jit.si/external_api.js"></script>
   <script>
-    const callButton = document.getElementById("callButton");
-    const endButton = document.getElementById("endButton");
-    const numberInput = document.getElementById("phoneNumber");
     const statusText = document.getElementById("status");
+    const startButton = document.getElementById("startButton");
+    const inviteButton = document.getElementById("inviteButton");
 
-    let device;
-    let activeCall;
+    // Call link-ina iguma imwe igihe page ifunguye.
+    const params = new URLSearchParams(window.location.search);
+    let roomName = params.get("room");
 
-    async function setupDevice() {
-      const response = await fetch("/token");
-
-      if (!response.ok) {
-        throw new Error("Server ntiyashoboye gutanga call token.");
-      }
-
-      const { token } = await response.json();
-
-      if (!window.Twilio?.Device) {
-        throw new Error("Twilio Voice SDK ntiyafungutse. Reba internet.");
-      }
-
-      device = new Twilio.Device(token);
-      await device.register();
+    if (!roomName) {
+      roomName = "ymeta-" + crypto.randomUUID();
+      params.set("room", roomName);
+      history.replaceState(null, "", `${location.pathname}?${params}`);
     }
 
-    callButton.addEventListener("click", async () => {
-      const number = numberInput.value.trim();
+    let jitsiApi = null;
 
-      if (!/^\+[1-9]\d{7,14}$/.test(number)) {
-        statusText.textContent =
-          "Andika nimero yemewe mu buryo mpuzamahanga, urugero +2507XXXXXXXX.";
+    startButton.addEventListener("click", () => {
+      if (!window.JitsiMeetExternalAPI) {
+        statusText.textContent = "Jitsi ntiyapakiwe. Reba internet connection.";
         return;
       }
 
-      callButton.disabled = true;
-      statusText.textContent = "Turimo gutegura call...";
-
-      try {
-        if (!device) {
-          await setupDevice();
-        }
-
-        // Iyi action isaba microphone permission kandi itangiza outbound call.
-        activeCall = await device.connect({
-          params: { To: number }
-        });
-
-        activeCall.on("accept", () => {
-          statusText.textContent = `Call ihujwe na ${number}.`;
-          endButton.disabled = false;
-        });
-
-        activeCall.on("disconnect", () => {
-          statusText.textContent = "Call irangiye.";
-          activeCall = null;
-          callButton.disabled = false;
-          endButton.disabled = true;
-        });
-
-        activeCall.on("error", (error) => {
-          console.error(error);
-          statusText.textContent = "Call yanze. Reba nimero, Twilio settings na internet.";
-          activeCall = null;
-          callButton.disabled = false;
-          endButton.disabled = true;
-        });
-
-        statusText.textContent = "Turimo guhamagara...";
-      } catch (error) {
-        console.error(error);
-        statusText.textContent = error.message || "Call ntiyatangiye.";
-        callButton.disabled = false;
-        endButton.disabled = true;
+      if (jitsiApi) {
+        statusText.textContent = "Call yamaze gutangira.";
+        return;
       }
+
+      const displayName =
+        document.getElementById("myName").value.trim() || "Y-META user";
+
+      jitsiApi = new JitsiMeetExternalAPI("meet.jit.si", {
+        roomName,
+        parentNode: document.getElementById("meeting"),
+        width: "100%",
+        height: 500,
+        userInfo: { displayName }
+      });
+
+      jitsiApi.addEventListener("videoConferenceJoined", () => {
+        statusText.textContent =
+          "Winjiye muri video call. Sangiza undi muntu link iri muri invitation.";
+        inviteButton.disabled = false;
+      });
+
+      jitsiApi.addEventListener("videoConferenceLeft", () => {
+        statusText.textContent = "Wasohotse muri call.";
+        jitsiApi = null;
+      });
+
+      statusText.textContent =
+        "Turimo gufungura call. Emera camera na microphone.";
     });
 
-    endButton.addEventListener("click", () => {
-      if (activeCall) {
-        activeCall.disconnect();
+    inviteButton.addEventListener("click", () => {
+      const phone = document.getElementById("phoneNumber").value.trim();
+
+      if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+        statusText.textContent =
+          "Andika nimero mu buryo mpuzamahanga, urugero +2507XXXXXXXX.";
+        return;
       }
+
+      const inviteUrl = new URL(window.location.href);
+      inviteUrl.searchParams.set("room", roomName);
+
+      const message =
+        `Injira muri Y-META video call ukoresheje iyi link: ${inviteUrl.href}`;
+
+      // Ifungura SMS app kugira ngo wemeze wohereze ubutumwa.
+      window.location.href =
+        `sms:${phone}?body=${encodeURIComponent(message)}`;
     });
   </script>
 </body>
