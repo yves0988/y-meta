@@ -1,0 +1,6 @@
+TWILIO_ACCOUNT_SID=AC_your_account_sid
+TWILIO_API_KEY_SID=SK_your_api_key_sid
+TWILIO_API_KEY_SECRET=your_api_key_secret
+TWILIO_TWIML_APP_SID=AP_your_twiml_app_sid
+TWILIO_CALLER_ID=+1your_twilio_number
+PORT=3000
