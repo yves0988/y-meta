@@ -11,7 +11,7 @@
 </head>
 <body>
 
-  <div class="container">
+  <div ="container">
 
     <!-- LOGIN SCREEN -->
     <section id="authScreen" class="auth-box">
@@ -50,7 +50,7 @@
         <button id="logoutBtn">Logout</button>
       </header>
 
-      <div class="chat-layout">
+      <div ="chat-layout">
 
         <aside>
           <h3>Users</h3>
