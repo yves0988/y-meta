@@ -14,10 +14,10 @@
   <div ="container">
 
     <!-- LOGIN SCREEN -->
-    <section id="authScreen" class="auth-box">
+    <section id="authScreen" ="auth-box">
 
       <h1>My Chat App</h1>
-      <p>Connect with your friends</p>
+      <p>Connect  your friends</p>
 
       <input
         id="username"
