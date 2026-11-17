@@ -1,96 +1,16 @@
-<!doctype html>
-<html lang="rw">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Y-META — Call</title>
-  <style>
-    body {
-      max-width: 520px;
-      margin: 40px auto;
-      padding: 0 16px;
-      font-family: Arial, sans-serif;
-    }
-
-    input, button {
-      box-sizing: border-box;
-      display: block;
-      width: 100%;
-      margin: 12px 0;
-      padding: 12px;
-      font-size: 16px;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    #status {
-      min-height: 24px;
-    }
-  </style>
-</head>
-<body>
-  <h1>Y-META — Hamagara</h1>
+<section id="ymeta-video-call">
+  <h2>Y-META Video Call</h2>
   <p>
-    Andika nimero mu buryo mpuzamahanga, urugero
-    <strong>+2507XXXXXXXX</strong>, uhitemo app ushaka gukoresha.
+    Kora video-call link uyisangize uwo ushaka guhamagara.
+    Na we agomba gufungura link muri browser, akanda Join.
   </p>
 
-  <label for="phone">Nimero ya telefone</label>
-  <input id="phone" type="tel" placeholder="+2507XXXXXXXX" autocomplete="tel">
+  <label for="callName">Izina ryawe</label>
+  <input id="callName" type="text" placeholder="Andika izina ryawe">
 
-  <button id="faceTime" type="button">Fungura FaceTime</button>
-  <button id="whatsApp" type="button">Fungura WhatsApp</button>
-  <button id="phoneCall" type="button">Fungura phone dialer</button>
+  <button id="startVideoCall" type="button">Tangira / Join video call</button>
+  <button id="copyCallLink" type="button" disabled>Copy invitation link</button>
 
-  <p id="status" role="status">Andika nimero ubanze.</p>
-
-  <script>
-    const phoneInput = document.getElementById("phone");
-    const statusText = document.getElementById("status");
-
-    function getNumber() {
-      const input = phoneInput.value.trim();
-
-      // E.164: + ikurikirwa n'imibare 8–15.
-      if (!/^\+[1-9]\d{7,14}$/.test(input)) {
-        statusText.textContent =
-          "Andika nimero yuzuye, urugero +2507XXXXXXXX.";
-        return null;
-      }
-
-      return input;
-    }
-
-    document.getElementById("faceTime").addEventListener("click", () => {
-      const number = getNumber();
-      if (!number) return;
-
-      statusText.textContent =
-        "Turimo gufungura FaceTime. Emeza call muri FaceTime.";
-      window.location.href = "facetime://" + encodeURIComponent(number);
-    });
-
-    document.getElementById("whatsApp").addEventListener("click", () => {
-      const number = getNumber();
-      if (!number) return;
-
-      // WhatsApp link ikoresha imibare gusa, nta + cyangwa spaces.
-      const digits = number.replace(/\D/g, "");
-      statusText.textContent =
-        "WhatsApp irafungura chat. Kanda voice/video call muri WhatsApp.";
-      window.open("https://wa.me/" + digits, "_blank", "noopener");
-    });
-
-    document.getElementById("phoneCall").addEventListener("click", () => {
-      const number = getNumber();
-      if (!number) return;
-
-      statusText.textContent =
-        "Dialer irafunguka niba Mac yawe ifite calling app ihujwe na tel:.";
-      window.location.href = "tel:" + number;
-    });
-  </script>
-</body>
-</html>
+  <p id="videoCallStatus" role="status">Witeguye.</p>
+  <div id="jitsiMeeting"></div>
+</section>
