@@ -1,7 +1,7 @@
 {
   "name": "y-meta-voice",
   "version": "1.0.0",
-    "description": "Y-META app with home page, contact list, and video call
+   "description": "Y-META app with home page",
   "scripts": {
     "start": "node server.js"
   },
