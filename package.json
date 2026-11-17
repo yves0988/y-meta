@@ -1,14 +1,13 @@
-
 {
   "name": "y-meta",
   "version": "1.0.0",
-  "description": "Y-META local app with homepage and video call",
-  "main": "server.js",
+  "description": "Y-META app with home page, contact list, and video call room",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "socket.io": "^4.7.5"
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "simple-peer": "^9.11.1"
   }
 }
