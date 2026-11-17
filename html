@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phone Call</title>
+</head>
+<body>
+  <input id="number" placeholder="+2507XXXXXXXX">
+  <button onclick="callNow()">Call</button>
+
+  <script>
+    function callNow() {
+      const number = document.getElementById("number").value.trim();
+      if (!/^\+[1-9]\d{7,14}$/.test(number)) {
+        alert("Enter a valid number like +2507XXXXXXXX");
+        return;
+      }
+      window.location.href = "tel:" + number;
+    }
+  </script>
+</body>
+</html>
