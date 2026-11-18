@@ -27,8 +27,7 @@ let cameraOn = true;
 let micOn = true;
 
 function showPage(pageId) {
-  const pages = document.querySelectorAll(".page");
-  pages.forEach((page) => {
+  document.querySelectorAll(".page").forEach((page) => {
     page.classList.add("hidden");
   });
 
@@ -90,6 +89,7 @@ function importContacts() {
 function searchFriend() {
   const query = document.getElementById("friendSearch").value.trim().toLowerCase();
   const contacts = document.querySelectorAll(".contact-card");
+
   contacts.forEach((card) => {
     const text = card.textContent.toLowerCase();
     card.style.display = text.includes(query) || !query ? "block" : "none";
@@ -117,6 +117,12 @@ function addCallToHistory(name) {
 }
 
 async function startLocalCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    statusEl.textContent =
+      "Camera/microphone require HTTPS or localhost and a supported browser.";
+    return false;
+  }
+
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -124,11 +130,17 @@ async function startLocalCamera() {
     });
 
     localVideo.srcObject = localStream;
-    localVideo.play();
-    statusEl.textContent = "Camera ready";
+    localVideo.play().catch((error) => {
+      console.error("Could not play local video:", error);
+    });
+
+    statusEl.textContent = "Camera and microphone are ready.";
+    return true;
   } catch (error) {
-    console.error("Could not access camera:", error);
-    statusEl.textContent = "Camera access denied. Please allow camera/mic.";
+    console.error("Could not access camera or microphone:", error);
+    statusEl.textContent =
+      "Camera/microphone access denied. Allow access and try again.";
+    return false;
   }
 }
 
@@ -136,7 +148,19 @@ function createPeer(remoteUserId, initiator) {
   const peer = new SimplePeer({
     initiator,
     trickle: false,
-    stream: localStream
+    stream: localStream,
+    config: {
+      iceServers: [
+        {
+          urls: "stun:stun.l.google.com:19302"
+        },
+        {
+          urls: "turn:YOUR_TURN_SERVER:3478",
+          username: "YOUR_TURN_USERNAME",
+          credential: "YOUR_TURN_PASSWORD"
+        }
+      ]
+    }
   });
 
   peer.on("signal", (signal) => {
@@ -148,7 +172,14 @@ function createPeer(remoteUserId, initiator) {
 
   peer.on("stream", (stream) => {
     remoteVideo.srcObject = stream;
-    remoteVideo.play();
+    remoteVideo.play().catch((error) => {
+      console.error("Could not play remote video:", error);
+    });
+  });
+
+  peer.on("error", (error) => {
+    console.error("WebRTC peer error:", error);
+    callStatus.textContent = "Call connection failed. Please try again.";
   });
 
   peer.on("close", () => {
@@ -167,7 +198,8 @@ joinBtn.addEventListener("click", async () => {
     return;
   }
 
-  await startLocalCamera();
+  const cameraReady = await startLocalCamera();
+  if (!cameraReady) return;
 
   joinScreen.classList.add("hidden");
   callScreen.classList.remove("hidden");
@@ -185,6 +217,7 @@ leaveBtn.addEventListener("click", () => {
 
   if (localStream) {
     localStream.getTracks().forEach((track) => track.stop());
+    localStream = null;
   }
 
   localVideo.srcObject = null;
@@ -204,7 +237,6 @@ cameraBtn.addEventListener("click", () => {
 
   cameraOn = !cameraOn;
   videoTrack.enabled = cameraOn;
-
   cameraBtn.textContent = cameraOn ? "Turn Camera Off" : "Turn Camera On";
 });
 
@@ -216,11 +248,19 @@ micBtn.addEventListener("click", () => {
 
   micOn = !micOn;
   audioTrack.enabled = micOn;
-
   micBtn.textContent = micOn ? "Mute Microphone" : "Unmute Microphone";
 });
 
-socket.on("room-joined", ({ roomId, userId, userName }) => {
+socket.on("connect", () => {
+  console.log("Connected to call server:", socket.id);
+});
+
+socket.on("connect_error", (error) => {
+  console.error("Could not connect to call server:", error);
+  statusEl.textContent = "Could not connect to the call server.";
+});
+
+socket.on("room-joined", ({ roomId, userName }) => {
   statusEl.textContent = `Connected to room: ${roomId}`;
   callStatus.textContent = `You joined as ${userName}`;
   addCallToHistory(userName);
@@ -248,7 +288,8 @@ socket.on("user-disconnected", ({ userId }) => {
     delete peers[userId];
   }
 
-  callStatus.textContent = "A participant left the call";
+  remoteVideo.srcObject = null;
+  callStatus.textContent = "A participant left the call.";
 });
 
 showPage("home");
