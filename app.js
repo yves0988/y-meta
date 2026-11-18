@@ -1,529 +1,254 @@
-
 const socket = io();
 
-const nameInput = document.getElementById("userName");
-const connectButton = document.getElementById("connectButton");
-const loginSection = document.getElementById("loginSection");
-const callSection = document.getElementById("callSection");
+const joinBtn = document.getElementById("joinBtn");
+const leaveBtn = document.getElementById("leaveBtn");
+const cameraBtn = document.getElementById("cameraBtn");
+const micBtn = document.getElementById("micBtn");
 
-const usersList = document.getElementById("usersList");
-const statusText = document.getElementById("status");
-const myIdText = document.getElementById("myId");
-
-const incomingCall = document.getElementById("incomingCall");
-const callerName = document.getElementById("callerName");
-
-const acceptButton = document.getElementById("acceptButton");
-const rejectButton = document.getElementById("rejectButton");
-const endButton = document.getElementById("endButton");
-
+const joinScreen = document.getElementById("joinScreen");
+const callScreen = document.getElementById("callScreen");
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
+const statusEl = document.getElementById("status");
+const callStatus = document.getElementById("callStatus");
+const callHistory = document.getElementById("callHistory");
+const feed = document.getElementById("feed");
 
-let myId = null;
-let currentCall = null;
-let pendingCall = null;
-let peer = null;
+const callNameInput = document.getElementById("callName");
+const callRoomInput = document.getElementById("callRoom");
+const messageNameInput = document.getElementById("messageName");
+const messageText = document.getElementById("messageText");
+
 let localStream = null;
-let remoteDescriptionSet = false;
-let queuedCandidates = [];
+let peers = {};
+let currentRoom = null;
+let myName = "";
+let cameraOn = true;
+let micOn = true;
 
-let onlineUsers = [];
-
-const rtcConfig = {
-  iceServers: [
-    {
-      urls: "stun:stun.l.google.com:19302"
-    }
-
-    // Add your TURN server credentials here
-    // for reliable connections across restrictive networks.
-  ]
-};
-
-// CONNECT WITHOUT PASSWORD OR LOGIN
-
-connectButton.addEventListener("click", () => {
-
-  const name = nameInput.value.trim();
-
-  if (!name) {
-    statusText.textContent = "Please enter your name.";
-    return;
-  }
-
-  connectButton.disabled = true;
-
-  socket.emit("register", name, (result) => {
-
-    connectButton.disabled = false;
-
-    if (!result?.ok) {
-      statusText.textContent =
-        result?.error || "Connection failed.";
-      return;
-    }
-
-    myId = result.id;
-
-    myIdText.textContent = myId;
-
-    loginSection.hidden = true;
-    callSection.hidden = false;
-
-    statusText.textContent =
-      "Connected. You can now call people online.";
-
+function showPage(pageId) {
+  const pages = document.querySelectorAll(".page");
+  pages.forEach((page) => {
+    page.classList.add("hidden");
   });
 
-});
-
-socket.on("connect", () => {
-  if (myId) {
-    statusText.textContent =
-      "Connection interrupted. Please reconnect.";
+  const target = document.getElementById(pageId);
+  if (target) {
+    target.classList.remove("hidden");
   }
-});
-
-socket.on("disconnect", () => {
-  if (myId) {
-    statusText.textContent =
-      "Disconnected from server.";
-    cleanup();
-  }
-});
-
-// DISPLAY ONLINE USERS
-
-socket.on("online-users", (users) => {
-
-  onlineUsers = users;
-
-  usersList.replaceChildren();
-
-  const others = users.filter(user => user.id !== myId);
-
-  if (others.length === 0) {
-    usersList.textContent = "No other users online.";
-    return;
-  }
-
-  others.forEach(user => {
-
-    const item = document.createElement("div");
-    item.className = "userItem";
-
-    const name = document.createElement("span");
-    name.textContent = user.name;
-
-    const button = document.createElement("button");
-    button.textContent = "Call";
-
-    button.addEventListener("click", () => {
-      startCall(user.id);
-    });
-
-    item.append(name, button);
-    usersList.appendChild(item);
-
-  });
-
-});
-
-// CAMERA AND MICROPHONE
-
-async function getCamera() {
-
-  if (localStream) {
-    return localStream;
-  }
-
-  if (!navigator.mediaDevices?.getUserMedia) {
-    throw new Error(
-      "Camera requires HTTPS or localhost."
-    );
-  }
-
-  localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
-    audio: true
-  });
-
-  localVideo.srcObject = localStream;
-
-  return localStream;
 }
 
-// CREATE WEBRTC CONNECTION
+function publishPost() {
+  const text = document.getElementById("postText").value.trim();
+  if (!text) return;
 
-function createPeer(targetId) {
+  const item = document.createElement("div");
+  item.className = "feed-item";
+  item.innerHTML = `<strong>You</strong><p>${text}</p>`;
+  feed.prepend(item);
 
-  if (peer) {
-    peer.close();
+  document.getElementById("postText").value = "";
+}
+
+function sendMessage() {
+  const name = messageNameInput.value.trim();
+  const text = messageText.value.trim();
+
+  if (!name || !text) return;
+
+  const result = document.createElement("div");
+  result.className = "message-item";
+  result.innerHTML = `<strong>${name}</strong><p>${text}</p>`;
+  document.getElementById("messageResults").appendChild(result);
+
+  messageNameInput.value = "";
+  messageText.value = "";
+}
+
+function importContacts() {
+  const contacts = [
+    { name: "Aline", email: "aline@example.com", phone: "+250788000001" },
+    { name: "Eric", email: "eric@example.com", phone: "+250788000002" },
+    { name: "Maya", email: "maya@example.com", phone: "+250788000003" }
+  ];
+
+  const container = document.getElementById("contactResults");
+  container.innerHTML = "";
+
+  contacts.forEach((person) => {
+    const card = document.createElement("div");
+    card.className = "contact-card";
+    card.innerHTML = `
+      <strong>${person.name}</strong>
+      <p>${person.email}</p>
+      <p>${person.phone}</p>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function searchFriend() {
+  const query = document.getElementById("friendSearch").value.trim().toLowerCase();
+  const contacts = document.querySelectorAll(".contact-card");
+  contacts.forEach((card) => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(query) || !query ? "block" : "none";
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById("profileName").value.trim();
+  const email = document.getElementById("profileEmail").value.trim();
+  const status = document.getElementById("profileStatus");
+
+  if (!name || !email) {
+    status.textContent = "Please enter your name and email.";
+    return;
   }
 
-  queuedCandidates = [];
-  remoteDescriptionSet = false;
+  status.textContent = `Profile saved for ${name} (${email})`;
+}
 
-  peer = new RTCPeerConnection(rtcConfig);
+function addCallToHistory(name) {
+  const item = document.createElement("div");
+  item.className = "call-item";
+  item.textContent = `${new Date().toLocaleTimeString()} - ${name}`;
+  callHistory.prepend(item);
+}
 
-  localStream.getTracks().forEach(track => {
-    peer.addTrack(track, localStream);
+async function startLocalCamera() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true
+    });
+
+    localVideo.srcObject = localStream;
+    localVideo.play();
+    statusEl.textContent = "Camera ready";
+  } catch (error) {
+    console.error("Could not access camera:", error);
+    statusEl.textContent = "Camera access denied. Please allow camera/mic.";
+  }
+}
+
+function createPeer(remoteUserId, initiator) {
+  const peer = new SimplePeer({
+    initiator,
+    trickle: false,
+    stream: localStream
   });
 
-  peer.ontrack = async (event) => {
+  peer.on("signal", (signal) => {
+    socket.emit("signal", {
+      targetId: remoteUserId,
+      signal
+    });
+  });
 
-    remoteVideo.srcObject = event.streams[0];
+  peer.on("stream", (stream) => {
+    remoteVideo.srcObject = stream;
+    remoteVideo.play();
+  });
 
-    try {
-      await remoteVideo.play();
-    } catch (error) {
-      console.log("Remote video playback needs user interaction.");
-    }
-
-    statusText.textContent = "Video call connected.";
-
-  };
-
-  peer.onicecandidate = (event) => {
-
-    if (event.candidate && currentCall === targetId) {
-
-      socket.emit("signal", {
-        targetId,
-        signal: {
-          candidate: event.candidate
-        }
-      });
-
-    }
-
-  };
-
-  peer.onconnectionstatechange = () => {
-
-    if (!peer) return;
-
-    const state = peer.connectionState;
-
-    if (state === "connected") {
-      statusText.textContent = "Call connected successfully.";
-    }
-
-    if (state === "failed") {
-      statusText.textContent =
-        "Connection failed. A TURN server may be required.";
-    }
-
-    if (state === "disconnected") {
-      statusText.textContent = "Connection interrupted.";
-    }
-
-  };
+  peer.on("close", () => {
+    console.log("Peer closed:", remoteUserId);
+  });
 
   return peer;
 }
 
-// START A CALL
+joinBtn.addEventListener("click", async () => {
+  myName = callNameInput.value.trim();
+  currentRoom = callRoomInput.value.trim();
 
-async function startCall(targetId) {
-
-  if (currentCall || pendingCall) {
-    statusText.textContent = "Finish your current call first.";
+  if (!myName || !currentRoom) {
+    statusEl.textContent = "Please enter your name and room.";
     return;
   }
 
-  try {
+  await startLocalCamera();
 
-    statusText.textContent = "Preparing camera and microphone...";
+  joinScreen.classList.add("hidden");
+  callScreen.classList.remove("hidden");
 
-    await getCamera();
-
-    currentCall = targetId;
-
-    statusText.textContent = "Calling...";
-
-    socket.emit("call-user", { targetId }, (result) => {
-
-      if (!result?.ok) {
-
-        statusText.textContent =
-          result?.error || "Unable to call this person.";
-
-        cleanup();
-        return;
-
-      }
-
-      endButton.disabled = false;
-
-    });
-
-  } catch (error) {
-
-    statusText.textContent = error.message;
-    cleanup();
-
-  }
-
-}
-
-// INCOMING CALL
-
-socket.on("incoming-call", ({ from, name }) => {
-
-  if (currentCall || pendingCall) {
-
-    socket.emit("reject-call", { targetId: from });
-    return;
-
-  }
-
-  pendingCall = {
-    id: from,
-    name
-  };
-
-  callerName.textContent = name + " is calling you.";
-
-  incomingCall.hidden = false;
-
-  statusText.textContent = "Incoming call from " + name;
-
-  acceptButton.disabled = false;
-  rejectButton.disabled = false;
-
-});
-
-// ACCEPT CALL
-
-acceptButton.addEventListener("click", async () => {
-
-  if (!pendingCall) return;
-
-  const caller = pendingCall;
-
-  acceptButton.disabled = true;
-
-  try {
-
-    await getCamera();
-
-    currentCall = caller.id;
-
-    createPeer(caller.id);
-
-    socket.emit("accept-call", {
-      targetId: caller.id
-    });
-
-    pendingCall = null;
-    incomingCall.hidden = true;
-
-    endButton.disabled = false;
-
-    statusText.textContent = "Connecting to caller...";
-
-  } catch (error) {
-
-    socket.emit("reject-call", {
-      targetId: caller.id
-    });
-
-    statusText.textContent = error.message;
-
-    cleanup();
-
-  } finally {
-
-    acceptButton.disabled = false;
-
-  }
-
-});
-
-// REJECT CALL
-
-rejectButton.addEventListener("click", () => {
-
-  if (!pendingCall) return;
-
-  socket.emit("reject-call", {
-    targetId: pendingCall.id
+  statusEl.textContent = "Connecting...";
+  socket.emit("join-room", {
+    roomId: currentRoom,
+    userName: myName
   });
-
-  pendingCall = null;
-  incomingCall.hidden = true;
-
-  statusText.textContent = "Call rejected.";
-
 });
 
-// CALL ACCEPTED BY OTHER PERSON
-
-socket.on("call-accepted", async ({ from }) => {
-
-  if (currentCall !== from) return;
-
-  try {
-
-    await getCamera();
-
-    const connection = createPeer(from);
-
-    const offer = await connection.createOffer();
-
-    await connection.setLocalDescription(offer);
-
-    socket.emit("signal", {
-      targetId: from,
-      signal: {
-        description: connection.localDescription
-      }
-    });
-
-    statusText.textContent = "Connecting video...";
-
-  } catch (error) {
-
-    statusText.textContent = error.message;
-
-    socket.emit("end-call");
-    cleanup();
-
-  }
-
-});
-
-// EXCHANGE WEBRTC SIGNALS
-
-socket.on("signal", async ({ from, signal }) => {
-
-  if (!peer || currentCall !== from) return;
-
-  try {
-
-    if (signal.description) {
-
-      await peer.setRemoteDescription(
-        signal.description
-      );
-
-      remoteDescriptionSet = true;
-
-      if (signal.description.type === "offer") {
-
-        const answer = await peer.createAnswer();
-
-        await peer.setLocalDescription(answer);
-
-        socket.emit("signal", {
-          targetId: from,
-          signal: {
-            description: peer.localDescription
-          }
-        });
-
-      }
-
-      for (const candidate of queuedCandidates) {
-        await peer.addIceCandidate(candidate);
-      }
-
-      queuedCandidates = [];
-
-    }
-
-    if (signal.candidate) {
-
-      const candidate =
-        new RTCIceCandidate(signal.candidate);
-
-      if (remoteDescriptionSet) {
-        await peer.addIceCandidate(candidate);
-      } else {
-        queuedCandidates.push(candidate);
-      }
-
-    }
-
-  } catch (error) {
-
-    console.error("WebRTC signaling error:", error);
-
-    statusText.textContent =
-      "Could not establish the video connection.";
-
-  }
-
-});
-
-// CALL REJECTED
-
-socket.on("call-rejected", () => {
-
-  cleanup();
-
-  statusText.textContent = "The person rejected your call.";
-
-});
-
-// CALL ENDED
-
-socket.on("call-ended", () => {
-
-  cleanup();
-
-  statusText.textContent = "The other person ended the call.";
-
-});
-
-// END CALL
-
-endButton.addEventListener("click", () => {
-
-  if (currentCall) {
-    socket.emit("end-call");
-  }
-
-  cleanup();
-
-  statusText.textContent = "You ended the call.";
-
-});
-
-// CLEANUP
-
-function cleanup() {
-
-  if (peer) {
-    peer.ontrack = null;
-    peer.onicecandidate = null;
-    peer.onconnectionstatechange = null;
-    peer.close();
-    peer = null;
-  }
+leaveBtn.addEventListener("click", () => {
+  Object.values(peers).forEach((peer) => peer.destroy());
+  peers = {};
 
   if (localStream) {
-
-    localStream.getTracks().forEach(track => {
-      track.stop();
-    });
-
-    localStream = null;
-
+    localStream.getTracks().forEach((track) => track.stop());
   }
 
   localVideo.srcObject = null;
   remoteVideo.srcObject = null;
 
-  currentCall = null;
-  pendingCall = null;
+  callScreen.classList.add("hidden");
+  joinScreen.classList.remove("hidden");
+  statusEl.textContent = "Call ended";
+  callStatus.textContent = "Call ended";
+});
 
-  queuedCandidates = [];
-  remoteDescriptionSet = false;
+cameraBtn.addEventListener("click", () => {
+  if (!localStream) return;
 
-  incomingCall.hidden = true;
-  endButton.disabled = true;
+  const videoTrack = localStream.getVideoTracks()[0];
+  if (!videoTrack) return;
 
-}
+  cameraOn = !cameraOn;
+  videoTrack.enabled = cameraOn;
+
+  cameraBtn.textContent = cameraOn ? "Turn Camera Off" : "Turn Camera On";
+});
+
+micBtn.addEventListener("click", () => {
+  if (!localStream) return;
+
+  const audioTrack = localStream.getAudioTracks()[0];
+  if (!audioTrack) return;
+
+  micOn = !micOn;
+  audioTrack.enabled = micOn;
+
+  micBtn.textContent = micOn ? "Mute Microphone" : "Unmute Microphone";
+});
+
+socket.on("room-joined", ({ roomId, userId, userName }) => {
+  statusEl.textContent = `Connected to room: ${roomId}`;
+  callStatus.textContent = `You joined as ${userName}`;
+  addCallToHistory(userName);
+});
+
+socket.on("user-connected", ({ userId, userName }) => {
+  if (!peers[userId]) {
+    peers[userId] = createPeer(userId, true);
+  }
+
+  callStatus.textContent = `${userName} joined the room`;
+});
+
+socket.on("signal", ({ from, signal }) => {
+  if (!peers[from]) {
+    peers[from] = createPeer(from, false);
+  }
+
+  peers[from].signal(signal);
+});
+
+socket.on("user-disconnected", ({ userId }) => {
+  if (peers[userId]) {
+    peers[userId].destroy();
+    delete peers[userId];
+  }
+
+  callStatus.textContent = "A participant left the call";
+});
+
+showPage("home");
