@@ -1,145 +1,179 @@
-<script>
-  const APP_URL = "https://yves0988.github.io/y-meta/";
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Y-META Video Call</title>
+  <style>
+    body {
+      max-width: 760px;
+      margin: 30px auto;
+      padding: 0 16px;
+      font-family: Arial, sans-serif;
+    }
 
-  const homePage = document.getElementById("homePage");
-  const callPage = document.getElementById("callPage");
-  const homeTab = document.getElementById("homeTab");
-  const callTab = document.getElementById("callTab");
-  const startCallButton = document.getElementById("startCall");
-  const copyInviteButton = document.getElementById("copyInvite");
-  const statusText = document.getElementById("callStatus");
-  const meetingContainer = document.getElementById("meeting");
+    input, button {
+      display: block;
+      width: 100%;
+      max-width: 460px;
+      box-sizing: border-box;
+      margin: 12px 0;
+      padding: 12px;
+      font-size: 16px;
+    }
 
-  let roomName = new URLSearchParams(window.location.search).get("call");
-  let meeting = null;
-  let callUrl = "";
+    button { cursor: pointer; }
 
-  function showPage(page) {
-    const showCall = page === "call";
+    #status { overflow-wrap: anywhere; }
 
-    homePage.hidden = showCall;
-    callPage.hidden = !showCall;
+    #meeting {
+      width: 100%;
+      height: 600px;
+      margin-top: 16px;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+  <h1>Y-META Video Call</h1>
+  <p>
+    Start a call and share its invitation link. The other person can join
+    in their browser without installing Y-META.
+  </p>
 
-    homeTab.setAttribute("aria-current", showCall ? "false" : "page");
-    callTab.setAttribute("aria-current", showCall ? "page" : "false");
-  }
+  <label>
+    Your name
+    <input id="name" placeholder="Enter your name">
+  </label>
 
-  homeTab.addEventListener("click", () => showPage("home"));
-  callTab.addEventListener("click", () => showPage("call"));
+  <label>
+    Invite by phone (optional)
+    <input id="phone" type="tel" placeholder="+2507XXXXXXXX">
+  </label>
 
-  document.getElementById("goToCall").addEventListener("click", () => {
-    showPage("call");
-  });
+  <button id="callButton" type="button">Start video call</button>
+  <button id="inviteButton" type="button" disabled>Share invitation</button>
 
-  function makeRoomName() {
-    const randomId = crypto.randomUUID
-      ? crypto.randomUUID().replace(/-/g, "")
-      : Math.random().toString(36).slice(2) + Date.now().toString(36);
+  <p id="status" role="status">Ready.</p>
+  <div id="meeting"></div>
 
-    return "YMETA-" + randomId;
-  }
+  <script>
+    const APP_URL = "https://yves0988.github.io/y-meta/";
+    const statusText = document.getElementById("status");
+    const callButton = document.getElementById("callButton");
+    const inviteButton = document.getElementById("inviteButton");
+    const meetingContainer = document.getElementById("meeting");
 
-  function updateInviteLink() {
-    const inviteUrl = new URL(APP_URL);
-    inviteUrl.searchParams.set("call", roomName);
+    let room = new URLSearchParams(location.search).get("call");
+    let meeting = null;
 
-    callUrl = inviteUrl.href;
-    copyInviteButton.disabled = false;
-  }
+    function createCallId() {
+      const id = crypto.randomUUID
+        ? crypto.randomUUID().replace(/-/g, "")
+        : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-  function loadJitsiApi() {
-    return new Promise((resolve, reject) => {
-      if (window.JitsiMeetExternalAPI) {
-        resolve();
+      return "YMETA-" + id;
+    }
+
+    function getInviteLink() {
+      const url = new URL(APP_URL);
+      url.searchParams.set("call", room);
+      return url.href;
+    }
+
+    function loadJitsi() {
+      return new Promise((resolve, reject) => {
+        if (window.JitsiMeetExternalAPI) return resolve();
+
+        const script = document.createElement("script");
+        script.src = "https://meet.jit.si/external_api.js";
+        script.onload = resolve;
+        script.onerror = () => reject(new Error("Could not load the video-call service."));
+        document.head.appendChild(script);
+      });
+    }
+
+    callButton.addEventListener("click", async () => {
+      if (meeting) return;
+
+      if (!room) {
+        room = createCallId();
+        history.replaceState({}, "", getInviteLink());
+      }
+
+      callButton.disabled = true;
+      statusText.textContent = "Connecting. Allow camera and microphone when asked.";
+
+      try {
+        await loadJitsi();
+
+        meeting = new JitsiMeetExternalAPI("meet.jit.si", {
+          roomName: room,
+          parentNode: meetingContainer,
+          width: "100%",
+          height: "100%",
+          userInfo: {
+            displayName: document.getElementById("name").value.trim() || "Y-META user"
+          }
+        });
+
+        meeting.addEventListener("videoConferenceJoined", () => {
+          statusText.textContent = "You joined. Share the invitation with the other person.";
+          inviteButton.disabled = false;
+          callButton.textContent = "Call in progress";
+        });
+
+        meeting.addEventListener("videoConferenceLeft", () => {
+          meeting = null;
+          meetingContainer.replaceChildren();
+          callButton.disabled = false;
+          callButton.textContent = "Join video call";
+          statusText.textContent = "You left the call.";
+        });
+      } catch (error) {
+        console.error(error);
+        meeting = null;
+        callButton.disabled = false;
+        statusText.textContent = error.message || "Could not start the call.";
+      }
+    });
+
+    inviteButton.addEventListener("click", async () => {
+      if (!room) return;
+
+      const link = getInviteLink();
+      const phone = document.getElementById("phone").value.trim();
+
+      // On a phone, this opens the SMS app with the invitation filled in.
+      if (phone && /^\+[1-9]\d{7,14}$/.test(phone)) {
+        const message = `Join my Y-META video call: ${link}`;
+        location.href = `sms:${phone}?body=${encodeURIComponent(message)}`;
         return;
       }
 
-      const script = document.createElement("script");
-      script.src = "https://meet.jit.si/external_api.js";
-      script.async = true;
-      script.onload = resolve;
-      script.onerror = () => {
-        reject(new Error("Video-call service ntiyapakiwe. Reba internet."));
-      };
-      document.head.appendChild(script);
+      // Otherwise use the device's share sheet, or copy the link.
+      try {
+        if (navigator.share) {
+          await navigator.share({
+            title: "Y-META video call",
+            text: "Join my video call:",
+            url: link
+          });
+        } else {
+          await navigator.clipboard.writeText(link);
+          statusText.textContent = "Invitation link copied. Send it to the other person.";
+        }
+      } catch (error) {
+        statusText.textContent = `Copy/share this invitation link: ${link}`;
+      }
     });
-  }
 
-  startCallButton.addEventListener("click", async () => {
-    if (meeting) {
-      statusText.textContent = "Call yamaze gutangira.";
-      return;
-    }
-
-    if (!roomName) {
-      roomName = makeRoomName();
-      updateInviteLink();
-    }
-
-    const displayName =
-      document.getElementById("displayName").value.trim() || "Y-META user";
-
-    startCallButton.disabled = true;
-    statusText.textContent =
-      "Turimo gufungura call. Emera camera na microphone.";
-
-    try {
-      await loadJitsiApi();
-
-      meeting = new window.JitsiMeetExternalAPI("meet.jit.si", {
-        roomName,
-        parentNode: meetingContainer,
-        width: "100%",
-        height: "100%",
-        userInfo: { displayName }
-      });
-
-      meeting.addEventListener("videoConferenceJoined", () => {
-        statusText.textContent =
-          "Winjiye muri call. Kanda Copy invitation link uyisangize undi.";
-        updateInviteLink();
-        startCallButton.textContent = "Call irakomeje";
-      });
-
-      meeting.addEventListener("videoConferenceLeft", () => {
-        meeting = null;
-        meetingContainer.replaceChildren();
-        startCallButton.disabled = false;
-        startCallButton.textContent = "Tangira / Join call";
-        statusText.textContent = "Wasohotse muri call.";
-      });
-    } catch (error) {
-      console.error(error);
-      meeting = null;
-      startCallButton.disabled = false;
+    if (room) {
+      callButton.textContent = "Join video call";
+      inviteButton.disabled = false;
       statusText.textContent =
-        error.message || "Call ntiyatangiye. Reba internet connection.";
+        "You were invited. Tap Join video call and allow camera/microphone.";
     }
-  });
-
-  copyInviteButton.addEventListener("click", async () => {
-    if (!roomName) {
-      statusText.textContent = "Banza utangize call.";
-      return;
-    }
-
-    updateInviteLink();
-
-    try {
-      await navigator.clipboard.writeText(callUrl);
-      statusText.textContent =
-        "Invitation link yakopowe. Yisangize uwo ushaka ko yinjira muri call.";
-    } catch (error) {
-      statusText.textContent =
-        "Copy ntiyakunze. Koporora iyi link uyisangize: " + callUrl;
-    }
-  });
-
-  // Iyo umuntu afunguye invitation link, amwerekeza kuri Video Call page.
-  if (roomName) {
-    updateInviteLink();
-    showPage("call");
-  } else {
-    showPage("home");
-  }
-</script>
+  </script>
+</body>
+</html>
