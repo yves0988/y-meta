@@ -1,348 +1,153 @@
-<!doctype html>
-<html lang="rw">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Y-META Home</title>
-
-  <style>
-    :root {
-      --primary: #705cff;
-      --primary-dark: #4d3dd0;
-      --background: #f4f6fb;
-      --card: #ffffff;
-      --text: #172033;
-      --muted: #7a8499;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--background);
-      color: var(--text);
-      font-family: Arial, sans-serif;
-    }
-
-    .header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 72px;
-      padding: 0 28px;
-      background: white;
-      box-shadow: 0 2px 12px rgba(23, 32, 51, 0.08);
-    }
-
-    .brand {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--primary);
-      letter-spacing: 1px;
-    }
-
-    .search {
-      width: min(420px, 38vw);
-      padding: 12px 16px;
-      border: 1px solid #dde3ee;
-      border-radius: 999px;
-      background: #f7f8fc;
-      outline: none;
-    }
-
-    .avatar {
-      width: 44px;
-      height: 44px;
-      border: 0;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #705cff, #ff7bb5);
-      color: white;
-      font-weight: bold;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 210px minmax(0, 760px) 260px;
-      gap: 24px;
-      max-width: 1260px;
-      margin: 24px auto;
-      padding: 0 20px;
-    }
-
-    .sidebar,
-    .rightbar {
-      height: fit-content;
-      padding: 16px;
-      border-radius: 18px;
-      background: var(--card);
-      box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
-    }
-
-    .side-button,
-    .primary-button,
-    .quick-button {
-      width: 100%;
-      border: 0;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    .side-button {
-      margin: 5px 0;
-      padding: 12px;
-      background: transparent;
-      color: #4c5870;
-      text-align: left;
-    }
-
-    .side-button:hover,
-    .side-button.active {
-      background: #eeecff;
-      color: var(--primary);
-    }
-
-    .profile-card {
-      margin-bottom: 18px;
-      text-align: center;
-    }
-
-    .profile-circle {
-      width: 68px;
-      height: 68px;
-      margin: 0 auto 10px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #705cff, #ff7bb5);
-    }
-
-    .stories {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(110px, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-
-    .story {
-      position: relative;
-      height: 150px;
-      overflow: hidden;
-      border-radius: 18px;
-      background:
-        linear-gradient(145deg, transparent 35%, rgba(0, 0, 0, 0.55)),
-        linear-gradient(135deg, #705cff, #ff9a62);
-      color: white;
-      padding: 12px;
-      display: flex;
-      align-items: flex-end;
-      font-weight: bold;
-    }
-
-    .create-post,
-    .quick-card,
-    .post {
-      margin-bottom: 18px;
-      padding: 18px;
-      border-radius: 18px;
-      background: var(--card);
-      box-shadow: 0 8px 24px rgba(23, 32, 51, 0.06);
-    }
-
-    .quick-card {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .quick-button {
-      padding: 18px 8px;
-      background: #f4f6fb;
-      color: var(--text);
-    }
-
-    .quick-button:hover {
-      background: #eeecff;
-      color: var(--primary);
-      transform: translateY(-2px);
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 78px;
-      resize: vertical;
-      border: 0;
-      outline: 0;
-      font: inherit;
-      color: var(--text);
-    }
-
-    .primary-button {
-      width: auto;
-      margin-top: 10px;
-      padding: 12px 20px;
-      background: var(--primary);
-      color: white;
-      font-weight: bold;
-    }
-
-    .primary-button:hover {
-      background: var(--primary-dark);
-    }
-
-    .post strong {
-      display: block;
-      margin-bottom: 8px;
-    }
-
-    .post p {
-      margin: 0;
-      color: #3e485c;
-      line-height: 1.5;
-    }
-
-    @media (max-width: 1050px) {
-      .layout {
-        grid-template-columns: 180px minmax(0, 1fr);
-      }
-
-      .rightbar { display: none; }
-    }
-
-    @media (max-width: 700px) {
-      .header {
-        height: auto;
-        padding: 12px 16px;
-      }
-
-      .search { display: none; }
-
-      .layout {
-        grid-template-columns: 1fr;
-        margin-top: 12px;
-        padding: 0 12px;
-      }
-
-      .sidebar { display: none; }
-
-      .stories {
-        grid-template-columns: repeat(4, 110px);
-        overflow-x: auto;
-      }
-
-      .quick-card {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Y-META social app and video call" />
+  <title>Y-META | Connect Face to Face</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
-  <header class="header">
-    <div class="brand">Y-META</div>
-    <input class="search" type="search" placeholder="Search friends, videos and posts">
-    <button class="avatar" type="button" aria-label="Profile">YU</button>
+  <header class="topbar">
+    <h1>Y-META</h1>
+    <input id="search" placeholder="Search people, videos and friends" />
+    <div class="top-actions">
+      <button onclick="showPage('notifications')">🔔</button>
+      <button onclick="showPage('profile')">👤</button>
+    </div>
   </header>
 
-  <div class="layout">
+  <nav class="navigation">
+    <button onclick="showPage('home')">🏠 Home</button>
+    <button onclick="showPage('calls')">📹 Calls</button>
+    <button onclick="showPage('contacts')">👥 Contacts</button>
+    <button onclick="showPage('messages')">💬 Messages</button>
+    <button onclick="showPage('discover')">▶ Discover</button>
+    <button onclick="showPage('profile')">👤 Profile</button>
+  </nav>
+
+  <main class="layout">
     <aside class="sidebar">
-      <button class="side-button active" type="button">🏠 Home</button>
-      <button class="side-button" type="button" id="sidebarCall">📹 Video call</button>
-      <button class="side-button" type="button">👥 Friends</button>
-      <button class="side-button" type="button">💬 Messages</button>
-      <button class="side-button" type="button">🎬 Videos</button>
-      <button class="side-button" type="button">🔔 Notifications</button>
+      <h3>My Y-META</h3>
+      <button onclick="showPage('home')">🏠 Home</button>
+      <button onclick="showPage('contacts')">📱 Phone contacts</button>
+      <button onclick="showPage('calls')">📞 Call history</button>
+      <button onclick="showPage('messages')">💬 My messages</button>
+      <button onclick="showPage('discover')">🎬 Videos</button>
+      <button onclick="showPage('profile')">⚙ Settings</button>
     </aside>
 
-    <main>
-      <section class="stories">
-        <div class="story">Create story</div>
-        <div class="story">Aline</div>
-        <div class="story">Eric</div>
-        <div class="story">Discover</div>
+    <section class="content">
+      <section id="home" class="page">
+        <h2>Welcome to Y-META 👋</h2>
+        <p>Connect with your people, anywhere in the world.</p>
+
+        <div class="quick-actions">
+          <button onclick="showPage('calls')">📹 Video Call</button>
+          <button onclick="showPage('calls')">📞 Voice Call</button>
+          <button onclick="showPage('contacts')">👥 Find Friends</button>
+          <button onclick="showPage('messages')">💬 Messages</button>
+        </div>
+
+        <h3>Stories</h3>
+        <div class="stories">
+          <div class="story">➕<br>Your story</div>
+          <div class="story">👩<br>Friend 1</div>
+          <div class="story">👨<br>Friend 2</div>
+          <div class="story">🌍<br>Explore</div>
+        </div>
+
+        <h3>What's happening?</h3>
+        <div class="post-box">
+          <textarea id="postText" placeholder="Share something with your friends..."></textarea>
+          <button onclick="publishPost()">Publish Post</button>
+        </div>
+
+        <div id="feed"></div>
+
+        <div class="ad-space">
+          <small>Sponsored advertisement</small>
+          <p>Your business advertisement can appear here.</p>
+        </div>
       </section>
 
-      <section class="quick-card">
-        <button class="quick-button" type="button" id="videoCallButton">
-          📹<br><strong>Video call</strong>
-        </button>
-        <button class="quick-button" type="button">
-          💬<br><strong>Messages</strong>
-        </button>
-        <button class="quick-button" type="button">
-          👥<br><strong>Friends</strong>
-        </button>
+      <section id="calls" class="page hidden">
+        <h2>📞 Calls</h2>
+        <p>Connect face to face with your friends.</p>
+
+        <div id="joinScreen">
+          <input id="callName" placeholder="Your name" />
+          <input id="callRoom" placeholder="Enter your call room" />
+          <button id="joinBtn">Start Video Call</button>
+          <p id="status">Ready</p>
+        </div>
+
+        <div id="callScreen" class="hidden">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <video id="remoteVideo" autoplay playsinline></video>
+
+          <div class="call-tools">
+            <button id="cameraBtn">Turn Camera Off</button>
+            <button id="micBtn">Mute Microphone</button>
+            <button id="leaveBtn">End Call</button>
+          </div>
+
+          <p id="callStatus">Waiting...</p>
+        </div>
+
+        <h3>Recent calls</h3>
+        <div id="callHistory">No calls yet.</div>
       </section>
 
-      <section class="create-post">
-        <textarea id="postText" placeholder="What's on your mind?"></textarea>
-        <button class="primary-button" type="button" id="publishPost">
-          Publish
-        </button>
+      <section id="contacts" class="page hidden">
+        <h2>👥 My Contacts</h2>
+        <p>Find your friends using phone contacts or email.</p>
+        <button onclick="importContacts()">Import Phone Contacts</button>
+        <input id="friendSearch" placeholder="Search by name, email or phone" />
+        <button onclick="searchFriend()">Search</button>
+        <div id="contactResults"></div>
       </section>
 
-      <section id="feed">
-        <article class="post">
-          <strong>Y-META Community</strong>
-          <p>Welcome to Y-META. Share moments and connect with people around the world.</p>
-        </article>
+      <section id="messages" class="page hidden">
+        <h2>💬 Messages</h2>
+        <p>Chat with your Y-META friends.</p>
+        <input id="messageName" placeholder="Friend's username" />
+        <textarea id="messageText" placeholder="Write your message"></textarea>
+        <button onclick="sendMessage()">Send Message</button>
+        <div id="messageResults"></div>
       </section>
-    </main>
 
-    <aside class="rightbar">
-      <div class="profile-card">
-        <div class="profile-circle"></div>
-        <strong>Your profile</strong>
-        <p style="color: var(--muted)">View and manage your account</p>
-      </div>
+      <section id="discover" class="page hidden">
+        <h2>🎬 Discover</h2>
+        <p>Discover videos, creators and new people.</p>
+        <input placeholder="Search videos and creators" />
+        <div class="video-card">
+          <h3>Y-META Video Community</h3>
+          <p>Short videos and content from your community will appear here.</p>
+        </div>
+      </section>
 
-      <h3>Online friends</h3>
-      <p>🟢 Aline</p>
-      <p>🟢 Eric</p>
-      <p>🟢 Maya</p>
-    </aside>
-  </div>
+      <section id="notifications" class="page hidden">
+        <h2>🔔 Notifications</h2>
+        <p id="notificationList">You have no new notifications.</p>
+      </section>
 
-  <script>
-    const postText = document.getElementById("postText");
-    const publishButton = document.getElementById("publishPost");
-    const feed = document.getElementById("feed");
+      <section id="profile" class="page hidden">
+        <h2>👤 My Profile</h2>
+        <input id="profileName" placeholder="Your name" />
+        <input id="profileEmail" placeholder="Your email" />
+        <button onclick="saveProfile()">Save Profile</button>
+        <p id="profileStatus"></p>
+      </section>
+    </section>
+  </main>
 
-    publishButton.addEventListener("click", () => {
-      const text = postText.value.trim();
-      if (!text) return;
+  <footer>
+    <p>Y-META © 2026 | Connect People, Face to Face.</p>
+  </footer>
 
-      const post = document.createElement("article");
-      post.className = "post";
-      post.innerHTML =
-        "<strong>You</strong><p>" +
-        text.replace(/[&<>"']/g, character => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#039;"
-        }[character])) +
-        "</p>";
-
-      feed.prepend(post);
-      postText.value = "";
-    });
-
-    function openVideoCall() {
-      location.href = "https://yves0988.github.io/y-meta/?call=" +
-        "YMETA-" + crypto.randomUUID().replaceAll("-", "");
-    }
-
-    document
-      .getElementById("videoCallButton")
-      .addEventListener("click", openVideoCall);
-
-    document
-      .getElementById("sidebarCall")
-      .addEventListener("click", openVideoCall);
-  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
