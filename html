@@ -3,21 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Phone Call</title>
-</head>
-<body>
-  <input id="number" placeholder="+2507XXXXXXXX">
-  <button onclick="callNow()">Call</button>
-
-  <script>
-    function callNow() {
-      const number = document.getElementById("number").value.trim();
-      if (!/^\+[1-9]\d{7,14}$/.test(number)) {
-        alert("Enter a valid number like +2507XXXXXXXX");
-        return;
-      }
-      window.location.href = "tel:+2507XXXXXXXX";
+  <title>Y-META Video Call</title>
+  <style>
+    body {
+      max-width: 760px;
+      margin: 30px auto;
+      padding: 0 16px;
+      font-family: Arial, sans-serif;
     }
-  </script>
-</body>
-</html>
+
+    input, button {
+      display: block;
+      width: 100%;
+      max-width: 460px;
+      box-sizing: border-box;
+      margin: 12px 0;
+      padding: 12px;
+      font-size: 16px;
+    }
+
+    button { cursor: pointer; }
+
+    #status { overflow-wrap: anywhere; }
+
+    #meeting {
+      width: 100%;
