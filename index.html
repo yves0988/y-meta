@@ -5,12 +5,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Y-META Calls</title>
-
 <style>
 body {
   font-family: Arial;
-  background: #f2f5fa;
   text-align: center;
+  background: #f1f4f9;
   padding: 20px;
 }
 .container {
@@ -21,167 +20,62 @@ body {
   border-radius: 12px;
 }
 input, button {
-  width: 100%;
+  padding: 12px;
+  margin: 8px;
+  width: 90%;
   max-width: 400px;
-  padding: 13px;
-  margin: 10px auto;
-  display: block;
-  box-sizing: border-box;
 }
 button {
   background: #1769ff;
   color: white;
   border: none;
-  border-radius: 7px;
   cursor: pointer;
 }
-button:disabled {
-  background: gray;
+.videos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
-#meeting {
+video {
   width: 100%;
-  height: 600px;
-  margin-top: 20px;
+  max-width: 390px;
+  background: black;
 }
 </style>
 </head>
-
 <body>
+
 <div class="container">
-
 <h1>Y-META Calls</h1>
-<p>Call anyone through a private invitation link.</p>
 
-<input id="name" placeholder="Your name">
+<input id="userName" placeholder="Your name">
 
-<button id="start">Start Call</button>
+<button id="register">Connect to Y-META Calls</button>
 
-<button id="invite" disabled>Copy Invitation Link</button>
+<p>Your user ID: <strong id="myId">Not connected</strong></p>
 
-<p id="status">Ready to call.</p>
+<input id="targetId" placeholder="Enter receiver's user ID">
 
-<div id="meeting"></div>
+<button id="call">Call</button>
+<button id="end">End Call</button>
 
+<p id="status">Ready.</p>
+
+<div class="videos">
+  <div>
+    <h3>Your Camera</h3>
+    <video id="localVideo" autoplay muted playsinline></video>
+  </div>
+
+  <div>
+    <h3>Other Person</h3>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+</div>
 </div>
 
-<script>
-const statusText = document.getElementById("status");
-const startButton = document.getElementById("start");
-const inviteButton = document.getElementById("invite");
-const meetingBox = document.getElementById("meeting");
-
-let meeting = null;
-let room = new URLSearchParams(location.search).get("call");
-
-function createRoom() {
-  if (crypto.randomUUID) {
-    return "YMETA" + crypto.randomUUID().replace(/-/g, "");
-  }
-  return "YMETA" + Math.random().toString(36).slice(2) +
-    Date.now().toString(36);
-}
-
-function invitationLink() {
-  const url = new URL(location.href);
-  url.searchParams.set("call", room);
-  return url.href;
-}
-
-function loadJitsi() {
-  return new Promise((resolve, reject) => {
-    if (window.JitsiMeetExternalAPI) {
-      resolve();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = "https://meet.jit.si/external_api.js";
-
-    script.onload = resolve;
-    script.onerror = () => reject(
-      new Error("Unable to load video calling service.")
-    );
-
-    document.head.appendChild(script);
-  });
-}
-
-async function joinCall() {
-  if (meeting) return;
-
-  if (!room) room = createRoom();
-
-  startButton.disabled = true;
-  statusText.textContent = "Connecting...";
-
-  try {
-    await loadJitsi();
-
-    const url = new URL(location.href);
-    url.searchParams.set("call", room);
-    history.replaceState({}, "", url.href);
-
-    meeting = new JitsiMeetExternalAPI("meet.jit.si", {
-      roomName: room,
-      parentNode: meetingBox,
-      width: "100%",
-      height: "100%",
-
-      userInfo: {
-        displayName:
-          document.getElementById("name").value.trim() || "Y-META User"
-      },
-
-      configOverwrite: {
-        prejoinPageEnabled: false,
-        startWithAudioMuted: false,
-        startWithVideoMuted: false
-      }
-    });
-
-    meeting.addEventListener("videoConferenceJoined", () => {
-      statusText.textContent = "Connected! Call is active.";
-      startButton.textContent = "Call Connected";
-      inviteButton.disabled = false;
-    });
-
-    meeting.addEventListener("videoConferenceLeft", () => {
-      meeting = null;
-      meetingBox.replaceChildren();
-      startButton.disabled = false;
-      startButton.textContent = "Start Call";
-      inviteButton.disabled = true;
-      statusText.textContent = "Call ended.";
-    });
-
-  } catch (error) {
-    console.error(error);
-    meeting = null;
-    startButton.disabled = false;
-    statusText.textContent = error.message;
-  }
-}
-
-startButton.addEventListener("click", joinCall);
-
-inviteButton.addEventListener("click", async () => {
-  if (!room) return;
-
-  const link = invitationLink();
-
-  try {
-    await navigator.clipboard.writeText(link);
-    statusText.textContent = "Invitation link copied. Send it to your friend.";
-  } catch {
-    statusText.textContent = "Copy this link: " + link;
-  }
-});
-
-if (room) {
-  startButton.textContent = "Join Call";
-  statusText.textContent = "You have an invitation. Click Join Call.";
-}
-</script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
