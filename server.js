@@ -7,7 +7,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Itanga amadosiye ya app, harimo index.html, app.js na style.css.
 app.use(express.static(path.join(__dirname)));
 
 app.get("/health", (req, res) => {
@@ -18,69 +17,69 @@ io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
   socket.on("join-room", (data = {}) => {
-    const { roomId, userName } = data;
+    const roomId = typeof data.roomId === "string" ? data.roomId.trim() : "";
+    const userName = typeof data.userName === "string" && data.userName.trim()
+      ? data.userName.trim()
+      : "Guest";
 
-    if (typeof roomId !== "string" || !roomId.trim()) {
-      socket.emit("call-error", "Injiza izina rya room.");
+    if (!roomId) {
+      socket.emit("call-error", "Enter a room name to join the call.");
       return;
     }
 
-    const cleanRoomId = roomId.trim();
-    const cleanUserName =
-      typeof userName === "string" && userName.trim()
-        ? userName.trim()
-        : "Guest";
+    // Ensure a socket belongs to only one call room at a time.
+    const previousRoom = socket.data.roomId;
+    if (previousRoom && previousRoom !== roomId) {
+      socket.to(previousRoom).emit("user-disconnected", { userId: socket.id });
+      socket.leave(previousRoom);
+    }
 
-    socket.join(cleanRoomId);
-    socket.data.roomId = cleanRoomId;
-    socket.data.userName = cleanUserName;
+    socket.join(roomId);
+    socket.data.roomId = roomId;
+    socket.data.userName = userName;
 
-    // Bimenyesha abandi bari muri room ko umuntu mushya yinjiye.
-    socket.to(cleanRoomId).emit("user-connected", {
+    socket.to(roomId).emit("user-connected", {
       userId: socket.id,
-      userName: cleanUserName
+      userName
     });
 
-    // Bimenyesha uwinjiye ko yakiriwe.
     socket.emit("room-joined", {
-      roomId: cleanRoomId,
+      roomId,
       userId: socket.id,
-      userName: cleanUserName
+      userName
     });
 
-    console.log(`${cleanUserName} joined room: ${cleanRoomId}`);
+    console.log(`${userName} joined room ${roomId}`);
   });
 
   socket.on("signal", (data = {}) => {
     const { targetId, signal } = data;
+    if (typeof targetId !== "string" || !signal) return;
 
-    if (!targetId || !signal) {
-      console.warn("Received invalid signal from:", socket.id);
-      return;
-    }
+    // Socket.IO automatically creates a private room for every socket ID.
+    io.to(targetId).emit("signal", { from: socket.id, signal });
+  });
 
-    // Yohereza WebRTC signal ku muntu igenewe.
-    io.to(targetId).emit("signal", {
-      from: socket.id,
-      signal
-    });
+  socket.on("leave-room", () => {
+    const roomId = socket.data.roomId;
+    if (!roomId) return;
+
+    socket.to(roomId).emit("user-disconnected", { userId: socket.id });
+    socket.leave(roomId);
+    delete socket.data.roomId;
+    delete socket.data.userName;
   });
 
   socket.on("disconnect", () => {
     const roomId = socket.data.roomId;
-
     if (roomId) {
-      socket.to(roomId).emit("user-disconnected", {
-        userId: socket.id
-      });
+      socket.to(roomId).emit("user-disconnected", { userId: socket.id });
     }
-
     console.log("User disconnected:", socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Y-META server is running on port ${PORT}`);
 });
