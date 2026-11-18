@@ -223,5 +223,324 @@
 </head>
 <body>
   <header class="topbar">
-    <h1>Y-META</h1*
-
+    <h1>Y-META</h1>
+    <input id="search" placeholder="Search people, videos and friends">
+    <div class="top-actions">
+      <button onclick="showPage('notifications')">🔔</button>
+      <button onclick="showPage('profile')">👤</button>
+    </div>
+  </header>
+
+  <nav class="navigation">
+    <button onclick="showPage('home')">🏠 Home</button>
+    <button onclick="showPage('calls')">📹 Calls</button>
+    <button onclick="showPage('contacts')">👥 Contacts</button>
+    <button onclick="showPage('messages')">💬 Messages</button>
+    <button onclick="showPage('discover')">▶ Discover</button>
+    <button onclick="showPage('profile')">👤 Profile</button>
+  </nav>
+
+  <main class="layout">
+    <aside class="sidebar">
+      <h3>My Y-META</h3>
+      <button onclick="showPage('home')">🏠 Home</button>
+      <button onclick="showPage('contacts')">📱 Phone contacts</button>
+      <button onclick="showPage('calls')">📞 Call history</button>
+      <button onclick="showPage('messages')">💬 My messages</button>
+      <button onclick="showPage('discover')">🎬 Videos</button>
+      <button onclick="showPage('profile')">⚙ Settings</button>
+    </aside>
+
+    <section class="content">
+      <section id="home" class="page">
+        <h2>Welcome to Y-META 👋</h2>
+        <p>Connect with your people, anywhere in the world.</p>
+
+        <div class="quick-actions">
+          <button onclick="showPage('calls')">📹 Video Call</button>
+          <button onclick="showPage('calls')">📞 Voice Call</button>
+          <button onclick="showPage('contacts')">👥 Find Friends</button>
+          <button onclick="showPage('messages')">💬 Messages</button>
+        </div>
+
+        <h3>Stories</h3>
+        <div class="stories">
+          <div class="story">➕<br>Your story</div>
+          <div class="story">👩<br>Friend 1</div>
+          <div class="story">👨<br>Friend 2</div>
+          <div class="story">🌍<br>Explore</div>
+        </div>
+
+        <h3>What's happening?</h3>
+        <div class="post-box">
+          <textarea id="postText" placeholder="Share something with your friends..."></textarea>
+          <button onclick="publishPost()">Publish Post</button>
+        </div>
+
+        <div id="feed"></div>
+
+        <div class="ad-space">
+          <small>Sponsored advertisement</small>
+          <p>Your business advertisement can appear here.</p>
+        </div>
+      </section>
+
+      <section id="calls" class="page hidden">
+        <h2>📞 Calls</h2>
+        <p>Connect face to face with your friends.</p>
+
+        <div id="ymeta-video-call">
+          <label for="callName">Izina ryawe</label>
+          <input id="callName" type="text" placeholder="Andika izina ryawe">
+
+          <button id="startVideoCall" type="button">Tangira / Join video call</button>
+          <button id="copyLink" type="button" disabled>Copy invitation link</button>
+
+          <p id="videoCallStatus" role="status">Witeguye.</p>
+          <div id="jitsiMeeting"></div>
+        </div>
+
+        <h3>Recent calls</h3>
+        <div id="callHistory">No calls yet.</div>
+      </section>
+
+      <section id="contacts" class="page hidden">
+        <h2>👥 My Contacts</h2>
+        <p>Find your friends using phone contacts or email.</p>
+        <button onclick="importContacts()">Import Phone Contacts</button>
+        <input id="friendSearch" placeholder="Search by name, email or phone">
+        <button onclick="searchFriend()">Search</button>
+        <div id="contactResults"></div>
+      </section>
+
+      <section id="messages" class="page hidden">
+        <h2>💬 Messages</h2>
+        <p>Chat with your Y-META friends.</p>
+        <input id="messageName" placeholder="Friend's username">
+        <textarea id="messageText" placeholder="Write your message"></textarea>
+        <button onclick="sendMessage()">Send Message</button>
+        <div id="messageResults"></div>
+      </section>
+
+      <section id="discover" class="page hidden">
+        <h2>🎬 Discover</h2>
+        <p>Discover videos, creators and new people.</p>
+        <input placeholder="Search videos and creators">
+        <div class="video-card">
+          <h3>Y-META Video Community</h3>
+          <p>Short videos and content from your community will appear here.</p>
+        </div>
+      </section>
+
+      <section id="notifications" class="page hidden">
+        <h2>🔔 Notifications</h2>
+        <p id="notificationList">You have no new notifications.</p>
+      </section>
+
+      <section id="profile" class="page hidden">
+        <h2>👤 My Profile</h2>
+        <input id="profileName" placeholder="Your name">
+        <input id="profileEmail" placeholder="Your email">
+        <button onclick="saveProfile()">Save Profile</button>
+        <p id="profileStatus"></p>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <p>Y-META © 2026 | Connect People, Face to Face.</p>
+  </footer>
+
+  <script>
+    function showPage(pageId) {
+      const pages = document.querySelectorAll(".page");
+      pages.forEach(page => page.classList.add("hidden"));
+      const target = document.getElementById(pageId);
+      if (target) {
+        target.classList.remove("hidden");
+      }
+    }
+
+    function publishPost() {
+      const text = document.getElementById("postText").value.trim();
+      if (!text) return;
+
+      const item = document.createElement("div");
+      item.className = "feed-item";
+      item.innerHTML = `<strong>You</strong><p>${text}</p>`;
+      document.getElementById("feed").prepend(item);
+
+      document.getElementById("postText").value = "";
+    }
+
+    function importContacts() {
+      const contacts = [
+        { name: "Aline", email: "aline@example.com", phone: "+250788000001" },
+        { name: "Eric", email: "eric@example.com", phone: "+250788000002" },
+        { name: "Maya", email: "maya@example.com", phone: "+250788000003" }
+      ];
+
+      const container = document.getElementById("contactResults");
+      container.innerHTML = "";
+
+      contacts.forEach(person => {
+        const card = document.createElement("div");
+        card.className = "contact-card";
+        card.innerHTML = `
+          <strong>${person.name}</strong>
+          <p>${person.email}</p>
+          <p>${person.phone}</p>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function searchFriend() {
+      const query = document.getElementById("friendSearch").value.trim().toLowerCase();
+      const contacts = document.querySelectorAll(".contact-card");
+      contacts.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(query) || !query ? "block" : "none";
+      });
+    }
+
+    function sendMessage() {
+      const name = document.getElementById("messageName").value.trim();
+      const text = document.getElementById("messageText").value.trim();
+      if (!name || !text) return;
+
+      const result = document.createElement("div");
+      result.className = "message-item";
+      result.innerHTML = `<strong>${name}</strong><p>${text}</p>`;
+      document.getElementById("messageResults").appendChild(result);
+
+      document.getElementById("messageName").value = "";
+      document.getElementById("messageText").value = "";
+    }
+
+    function saveProfile() {
+      const name = document.getElementById("profileName").value.trim();
+      const email = document.getElementById("profileEmail").value.trim();
+      const status = document.getElementById("profileStatus");
+
+      if (!name || !email) {
+        status.textContent = "Please enter your name and email.";
+        return;
+      }
+
+      status.textContent = `Profile saved for ${name} (${email})`;
+    }
+
+    // Jitsi video call logic
+    (() => {
+      const nameInput = document.getElementById("callName");
+      const startButton = document.getElementById("startVideoCall");
+      const copyButton = document.getElementById("copyLink");
+      const statusText = document.getElementById("videoCallStatus");
+      const container = document.getElementById("jitsiMeeting");
+
+      let roomName = new URLSearchParams(window.location.search).get("call");
+      let videoMeeting = null;
+      let callUrl = window.location.href;
+
+      function updateRoomLink(room) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("call", room);
+        history.replaceState({}, "", url);
+        callUrl = url.href;
+      }
+
+      function setStatus(message) {
+        statusText.textContent = message;
+      }
+
+      function makeRandomRoom() {
+        return "YMETA-" + crypto.randomUUID().replace(/-/g, "").slice(0, 20);
+      }
+
+      function loadJitsi() {
+        return new Promise((resolve, reject) => {
+          if (window.JitsiMeetExternalAPI) {
+            resolve();
+            return;
+          }
+
+          const script = document.createElement("script");
+          script.src = "https://meet.jit.si/external_api.js";
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("Jitsi API could not load."));
+          document.head.appendChild(script);
+        });
+      }
+
+      startButton.addEventListener("click", async () => {
+        if (!roomName) {
+          roomName = makeRandomRoom();
+          updateRoomLink(roomName);
+        }
+
+        if (videoMeeting) {
+          setStatus("Call is already running.");
+          return;
+        }
+
+        startButton.disabled = true;
+        setStatus("Loading Jitsi video call...");
+
+        try {
+          await loadJitsi();
+
+          videoMeeting = new window.JitsiMeetExternalAPI("meet.jit.si", {
+            roomName: roomName,
+            parentNode: container,
+            width: "100%",
+            height: 650,
+            userInfo: {
+              displayName: nameInput.value.trim() || "Y-META user"
+            }
+          });
+
+          videoMeeting.addEventListener("videoConferenceJoined", () => {
+            setStatus("You joined the call. Share the invitation link.");
+            copyButton.disabled = false;
+          });
+
+          videoMeeting.addEventListener("videoConferenceLeft", () => {
+            videoMeeting = null;
+            startButton.disabled = false;
+            setStatus("You left the call.");
+          });
+
+          copyButton.disabled = false;
+        } catch (error) {
+          console.error(error);
+          startButton.disabled = false;
+          setStatus("Could not start video call. Check internet connection.");
+        }
+      });
+
+      copyButton.addEventListener("click", async () => {
+        if (!callUrl) {
+          setStatus("Start the call first to generate the link.");
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(callUrl);
+          setStatus("Invitation link copied. Send it to the other person.");
+        } catch (error) {
+          setStatus("Copy failed. Use this link: " + callUrl);
+        }
+      });
+
+      if (roomName) {
+        updateRoomLink(roomName);
+        copyButton.disabled = false;
+      }
+    })();
+
+    showPage("home");
+  </script>
+</body>
+</html>
