@@ -1,81 +1,102 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Y-META Calls</title>
-<style>
-body {
-  font-family: Arial;
-  text-align: center;
-  background: #f1f4f9;
-  padding: 20px;
-}
-.container {
-  max-width: 850px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-input, button {
-  padding: 12px;
-  margin: 8px;
-  width: 90%;
-  max-width: 400px;
-}
-button {
-  background: #1769ff;
-  color: white;
-  border: none;
-  cursor: pointer;
-}
-.videos {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-video {
-  width: 100%;
-  max-width: 390px;
-  background: black;
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Y-META Video Calls</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<div class="container">
-<h1>Y-META Calls</h1>
+  <main class="container">
 
-<input id="userName" placeholder="Your name">
+    <h1>Y-META</h1>
+    <h2>Video Calling</h2>
 
-<button id="register">Connect to Y-META Calls</button>
+    <section id="loginSection">
 
-<p>Your user ID: <strong id="myId">Not connected</strong></p>
+      <input
+        id="userName"
+        type="text"
+        placeholder="Enter your name"
+        maxlength="30"
+      >
 
-<input id="targetId" placeholder="Enter receiver's user ID">
+      <button id="connectButton">
+        Connect
+      </button>
 
-<button id="call">Call</button>
-<button id="end">End Call</button>
+    </section>
 
-<p id="status">Ready.</p>
+    <section id="callSection" hidden>
 
-<div class="videos">
-  <div>
-    <h3>Your Camera</h3>
-    <video id="localVideo" autoplay muted playsinline></video>
-  </div>
+      <p>
+        Your ID:
+        <strong id="myId">Connecting...</strong>
+      </p>
 
-  <div>
-    <h3>Other Person</h3>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
-</div>
-</div>
+      <h3>People Online</h3>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="app.js"></script>
+      <div id="usersList">
+        No users online.
+      </div>
+
+      <section id="incomingCall" hidden>
+
+        <h3 id="callerName">Incoming call</h3>
+
+        <button id="acceptButton">
+          Accept
+        </button>
+
+        <button id="rejectButton" class="danger">
+          Reject
+        </button>
+
+      </section>
+
+      <h3>Video Call</h3>
+
+      <div class="videos">
+
+        <div class="videoBox">
+          <p>You</p>
+          <video
+            id="localVideo"
+            autoplay
+            muted
+            playsinline
+          ></video>
+        </div>
+
+        <div class="videoBox">
+          <p>Other Person</p>
+          <video
+            id="remoteVideo"
+            autoplay
+            playsinline
+          ></video>
+        </div>
+
+      </div>
+
+      <button id="endButton" class="danger" disabled>
+        End Call
+      </button>
+
+    </section>
+
+    <p id="status">Ready.</p>
+
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
 
 </body>
 </html>
