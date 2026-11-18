@@ -1,1 +1,145 @@
+<script>
+  const APP_URL = "https://yves0988.github.io/y-meta/";
 
+  const homePage = document.getElementById("homePage");
+  const callPage = document.getElementById("callPage");
+  const homeTab = document.getElementById("homeTab");
+  const callTab = document.getElementById("callTab");
+  const startCallButton = document.getElementById("startCall");
+  const copyInviteButton = document.getElementById("copyInvite");
+  const statusText = document.getElementById("callStatus");
+  const meetingContainer = document.getElementById("meeting");
+
+  let roomName = new URLSearchParams(window.location.search).get("call");
+  let meeting = null;
+  let callUrl = "";
+
+  function showPage(page) {
+    const showCall = page === "call";
+
+    homePage.hidden = showCall;
+    callPage.hidden = !showCall;
+
+    homeTab.setAttribute("aria-current", showCall ? "false" : "page");
+    callTab.setAttribute("aria-current", showCall ? "page" : "false");
+  }
+
+  homeTab.addEventListener("click", () => showPage("home"));
+  callTab.addEventListener("click", () => showPage("call"));
+
+  document.getElementById("goToCall").addEventListener("click", () => {
+    showPage("call");
+  });
+
+  function makeRoomName() {
+    const randomId = crypto.randomUUID
+      ? crypto.randomUUID().replace(/-/g, "")
+      : Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+    return "YMETA-" + randomId;
+  }
+
+  function updateInviteLink() {
+    const inviteUrl = new URL(APP_URL);
+    inviteUrl.searchParams.set("call", roomName);
+
+    callUrl = inviteUrl.href;
+    copyInviteButton.disabled = false;
+  }
+
+  function loadJitsiApi() {
+    return new Promise((resolve, reject) => {
+      if (window.JitsiMeetExternalAPI) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://meet.jit.si/external_api.js";
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = () => {
+        reject(new Error("Video-call service ntiyapakiwe. Reba internet."));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  startCallButton.addEventListener("click", async () => {
+    if (meeting) {
+      statusText.textContent = "Call yamaze gutangira.";
+      return;
+    }
+
+    if (!roomName) {
+      roomName = makeRoomName();
+      updateInviteLink();
+    }
+
+    const displayName =
+      document.getElementById("displayName").value.trim() || "Y-META user";
+
+    startCallButton.disabled = true;
+    statusText.textContent =
+      "Turimo gufungura call. Emera camera na microphone.";
+
+    try {
+      await loadJitsiApi();
+
+      meeting = new window.JitsiMeetExternalAPI("meet.jit.si", {
+        roomName,
+        parentNode: meetingContainer,
+        width: "100%",
+        height: "100%",
+        userInfo: { displayName }
+      });
+
+      meeting.addEventListener("videoConferenceJoined", () => {
+        statusText.textContent =
+          "Winjiye muri call. Kanda Copy invitation link uyisangize undi.";
+        updateInviteLink();
+        startCallButton.textContent = "Call irakomeje";
+      });
+
+      meeting.addEventListener("videoConferenceLeft", () => {
+        meeting = null;
+        meetingContainer.replaceChildren();
+        startCallButton.disabled = false;
+        startCallButton.textContent = "Tangira / Join call";
+        statusText.textContent = "Wasohotse muri call.";
+      });
+    } catch (error) {
+      console.error(error);
+      meeting = null;
+      startCallButton.disabled = false;
+      statusText.textContent =
+        error.message || "Call ntiyatangiye. Reba internet connection.";
+    }
+  });
+
+  copyInviteButton.addEventListener("click", async () => {
+    if (!roomName) {
+      statusText.textContent = "Banza utangize call.";
+      return;
+    }
+
+    updateInviteLink();
+
+    try {
+      await navigator.clipboard.writeText(callUrl);
+      statusText.textContent =
+        "Invitation link yakopowe. Yisangize uwo ushaka ko yinjira muri call.";
+    } catch (error) {
+      statusText.textContent =
+        "Copy ntiyakunze. Koporora iyi link uyisangize: " + callUrl;
+    }
+  });
+
+  // Iyo umuntu afunguye invitation link, amwerekeza kuri Video Call page.
+  if (roomName) {
+    updateInviteLink();
+    showPage("call");
+  } else {
+    showPage("home");
+  }
+</script>
