@@ -27,7 +27,6 @@ io.on("connection", (socket) => {
       return;
     }
 
-    // Ensure a socket belongs to only one call room at a time.
     const previousRoom = socket.data.roomId;
     if (previousRoom && previousRoom !== roomId) {
       socket.to(previousRoom).emit("user-disconnected", { userId: socket.id });
@@ -56,7 +55,6 @@ io.on("connection", (socket) => {
     const { targetId, signal } = data;
     if (typeof targetId !== "string" || !signal) return;
 
-    // Socket.IO automatically creates a private room for every socket ID.
     io.to(targetId).emit("signal", { from: socket.id, signal });
   });
 

@@ -179,7 +179,7 @@ async function joinCall() {
   }
 
   if (!socket.connected) {
-    statusEl.textContent = "Connecting to the call server...";
+    statusEl.textContent = "Connecting to the call server... Please try again in a moment.";
     joining = false;
     joinBtn.disabled = false;
     return;
