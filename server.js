@@ -7,6 +7,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Itanga amadosiye ya app, harimo index.html, app.js na style.css.
 app.use(express.static(path.join(__dirname)));
 
 app.get("/health", (req, res) => {
@@ -16,28 +17,50 @@ app.get("/health", (req, res) => {
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", ({ roomId, userName }) => {
-    if (!roomId) return;
+  socket.on("join-room", (data = {}) => {
+    const { roomId, userName } = data;
 
-    socket.join(roomId);
+    if (typeof roomId !== "string" || !roomId.trim()) {
+      socket.emit("call-error", "Injiza izina rya room.");
+      return;
+    }
 
-    socket.data.roomId = roomId;
-    socket.data.userName = userName || "Guest";
+    const cleanRoomId = roomId.trim();
+    const cleanUserName =
+      typeof userName === "string" && userName.trim()
+        ? userName.trim()
+        : "Guest";
 
-    socket.to(roomId).emit("user-connected", {
+    socket.join(cleanRoomId);
+    socket.data.roomId = cleanRoomId;
+    socket.data.userName = cleanUserName;
+
+    // Bimenyesha abandi bari muri room ko umuntu mushya yinjiye.
+    socket.to(cleanRoomId).emit("user-connected", {
       userId: socket.id,
-      userName: socket.data.userName
+      userName: cleanUserName
     });
 
+    // Bimenyesha uwinjiye ko yakiriwe.
     socket.emit("room-joined", {
-      roomId,
+      roomId: cleanRoomId,
       userId: socket.id,
-      userName: socket.data.userName
+      userName: cleanUserName
     });
+
+    console.log(`${cleanUserName} joined room: ${cleanRoomId}`);
   });
 
-  socket.on("signal", ({ targetId, signal }) => {
-    socket.to(targetId).emit("signal", {
+  socket.on("signal", (data = {}) => {
+    const { targetId, signal } = data;
+
+    if (!targetId || !signal) {
+      console.warn("Received invalid signal from:", socket.id);
+      return;
+    }
+
+    // Yohereza WebRTC signal ku muntu igenewe.
+    io.to(targetId).emit("signal", {
       from: socket.id,
       signal
     });
@@ -56,7 +79,8 @@ io.on("connection", (socket) => {
   });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
 server.listen(PORT, () => {
-  console.log(`Y-META running at http://localhost:${PORT}`);
+  console.log(`Y-META server is running on port ${PORT}`);
 });
